@@ -1,5 +1,7 @@
 # rtoscope
 
+[![CI](https://github.com/2002-shashank/rtoscope/actions/workflows/ci.yml/badge.svg)](https://github.com/2002-shashank/rtoscope/actions/workflows/ci.yml)
+
 **Zephyr RTOS scheduling, instrumented and measured on a real ESP32.**
 
 **Highlights**
@@ -183,8 +185,7 @@ tools/.venv.nosync/bin/pytest    # 89 tests
 The suite was mutation-tested: deliberately introduced bugs make it fail.
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the tests and builds every firmware variant with
-warnings as errors, from [`west.yml`](west.yml) (Zephyr v4.4.2 + `hal_espressif`). Both jobs have been replayed
-locally; **the workflow has not yet run on GitHub.**
+warnings as errors, from [`west.yml`](west.yml) (Zephyr v4.4.2 + `hal_espressif`), on every push.
 
 ## View traces in Perfetto
 
@@ -287,7 +288,6 @@ west.yml, .github/      manifest and CI
 - **Small samples at the tail.** p99 over 300 L jobs rests on 3 samples; the bound checks use the max.
 - **The serial path is lossy.** One capture lost 9 bytes. Every dump is CRC-checked, and corrupted runs are
   excluded and reported, not silently used.
-- **CI is unproven** until the workflow first runs on GitHub.
 
 ## Future work
 
