@@ -31,6 +31,48 @@ config RTOSCOPE_PERIODIC_RUNS
 	  this many times in one boot, dumping the trace after each, then
 	  print "# rtoscope runs done".
 
+config RTOSCOPE_MONITOR
+	bool "On-device deadline and blocking-time monitor (src/monitor.c)"
+	help
+	  Inversion demo: H gets a 100 ms deadline and a 60 ms mutex blocking
+	  budget. Periodic demo: every job's deadline (= period) is monitored.
+	  Findings are "mon" records in the trace.
+
+config RTOSCOPE_INJECT_OVERRUN
+	bool "Periodic demo: M's 3rd job overruns by 300 ms (each run)"
+	depends on RTOSCOPE_DEMO_PERIODIC
+	help
+	  A controlled deadline miss for the monitor to catch.
+
+config RTOSCOPE_WDT
+	bool "Periodic demo: task watchdog channel per thread, hardware fallback"
+	depends on RTOSCOPE_DEMO_PERIODIC
+	select WATCHDOG
+	select TASK_WDT
+	select HWINFO
+	select REBOOT
+	help
+	  Each thread feeds its own task_wdt channel (timeout 2x its period) at
+	  the end of every job; TIMG0's hardware watchdog backs up the task
+	  watchdog itself. The boot banner reports the reset cause and any "last
+	  words" the previous boot left in RTC memory.
+
+choice RTOSCOPE_WDT_TEST
+	prompt "Watchdog test fault"
+	depends on RTOSCOPE_WDT
+	default RTOSCOPE_WDT_TEST_NONE
+
+config RTOSCOPE_WDT_TEST_NONE
+	bool "None: a healthy run must never trip the watchdog"
+
+config RTOSCOPE_WDT_TEST_STARVE
+	bool "M spins (preemptible) from its 4th job: task watchdog catches it"
+
+config RTOSCOPE_WDT_TEST_HANG
+	bool "M spins with interrupts locked from its 4th job: hardware watchdog"
+
+endchoice
+
 if RTOSCOPE_DEMO_INVERSION
 
 choice RTOSCOPE_LOCK

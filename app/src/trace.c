@@ -3,7 +3,8 @@
  *
  * Implements Zephyr's CONFIG_TRACING_USER hooks (weak no-ops in
  * subsys/tracing/user/tracing_user.c) to record every context switch,
- * wake-up, pend and priority change, plus app events from trace_app().
+ * wake-up, pend and priority change, plus app events from trace_app() and
+ * monitor findings from trace_mon().
  *
  * Hot path rule: a hook only takes a timestamp and stores a 16-byte record.
  * Thread names, formatting and UART output all happen in trace_dump().
@@ -26,9 +27,10 @@ enum ev_type {
 	EV_PEND,   /* thread started waiting on a kernel object */
 	EV_PRIO,   /* priority changed (k_mutex inheritance boost/restore) */
 	EV_APP,    /* trace_app() label */
+	EV_MON,    /* trace_mon() label: a monitor finding about a thread */
 };
 
-static const char *const ev_names[] = { "in", "out", "ready", "pend", "prio", "app" };
+static const char *const ev_names[] = { "in", "out", "ready", "pend", "prio", "app", "mon" };
 
 struct rec {
 	uint32_t cyc;              /* k_cycle_get_32(): CCOUNT, 240 MHz */
@@ -122,6 +124,11 @@ void trace_app(const char *what)
 	record(EV_APP, t, t->base.prio, 0, what);
 }
 
+void trace_mon(struct k_thread *thread, const char *what)
+{
+	record(EV_MON, thread, thread->base.prio, 0, what);
+}
+
 void trace_start(void)
 {
 	head = 0;
@@ -201,7 +208,7 @@ void trace_dump(void)
 		const struct rec *r = &ring[i & (TRACE_LEN - 1)];
 		const char *name = k_thread_name_get(r->thread);
 		const char *arg = r->type == EV_OUT ? state_name(r->state) :
-				  r->type == EV_APP ? r->what : "";
+				  r->what != NULL ? r->what : "";
 
 		/* Unsigned subtraction stays correct across one CCOUNT wrap. */
 		if (name != NULL && name[0] != '\0') {

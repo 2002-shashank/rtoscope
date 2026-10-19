@@ -1,0 +1,374 @@
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3ffb0000,len:6940
+ho 0 tail 12 room 4
+load:0x40080000,len:35344
+load:0x50000028,len:40
+entry 0x40083a2c
+I (soc_init): ESP Simple boot
+I (soc_init): compile time Oct 18 2026 22:13:23
+W (soc_init): Unicore bootloader
+I (soc_init): chip revision: v3.1
+I (flash_init): SPI Speed      : 40MHz
+I (flash_init): SPI Mode       : DIO
+I (flash_init): SPI Flash Size : 4MB
+I (boot): DRAM	: lma=00001020h vma=3ffb0000h size=01b1ch (  6940)
+I (boot): IRAM	: lma=00002b44h vma=40080000h size=08a10h ( 35344)
+I (boot): RTC_DATA	: lma=0000b55ch vma=50000028h size=00028h (    40)
+I (boot): IROM	: lma=00010000h vma=400d0000h size=03f40h ( 16192)
+I (boot): DROM	: lma=00020000h vma=3f400000h size=10000h ( 65536)
+I (boot): IROM	: lma=00030020h vma=400d0020h size=9233ch (598844)
+I (boot): DRAM	: lma=000c2364h vma=3ffc010ch size=03efch ( 16124)
+I (boot): IRAM	: lma=000c6268h vma=40080000h size=12bcch ( 76748)
+I (boot): libc heap size 147 kB.
+I (spi_flash): detected chip: generic
+I (spi_flash): flash io: dio
+*** Booting Zephyr OS build v4.4.2 ***
+rtoscope periodic: 1 hyperperiods of 3000 ms
+# task,name,prio,work_ms,period_ms
+# task,H,5,15,100
+# task,M,7,40,300
+# task,L,9,180,1000
+# boot: reset cause 0x8 power-on
+# wdt: test starve, fault armed (M, job 4)
+# monitor: deadline = period for every job
+# wdt: task watchdog channel M expired at 1405 ms, M running
+# monitor: deadline misses so far H 0, M 1, L 0
+ets Jul 29 2019 12:21:46
+
+rst:0x10 (RTCWDT_RTC_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3ffb0000,len:6940
+ho 0 tail 12 room 4
+load:0x40080000,len:35344
+load:0x50000028,len:40
+entry 0x40083a2c
+I (soc_init): ESP Simple boot
+I (soc_init): compile time Oct 18 2026 22:13:23
+W (soc_init): Unicore bootloader
+I (soc_init): chip revision: v3.1
+I (flash_init): SPI Speed      : 40MHz
+I (flash_init): SPI Mode       : DIO
+I (flash_init): SPI Flash Size : 4MB
+I (boot): DRAM	: lma=00001020h vma=3ffb0000h size=01b1ch (  6940)
+I (boot): IRAM	: lma=00002b44h vma=40080000h size=08a10h ( 35344)
+I (boot): RTC_DATA	: lma=0000b55ch vma=50000028h size=00028h (    40)
+I (boot): IROM	: lma=00010000h vma=400d0000h size=03f40h ( 16192)
+I (boot): DROM	: lma=00020000h vma=3f400000h size=10000h ( 65536)
+I (boot): IROM	: lma=00030020h vma=400d0020h size=9233ch (598844)
+I (boot): DRAM	: lma=000c2364h vma=3ffc010ch size=03efch ( 16124)
+I (boot): IRAM	: lma=000c6268h vma=40080000h size=12bcch ( 76748)
+I (boot): libc heap size 147 kB.
+I (spi_flash): detected chip: generic
+I (spi_flash): flash io: dio
+*** Booting Zephyr OS build v4.4.2 ***
+rtoscope periodic: 1 hyperperiods of 3000 ms
+# task,name,prio,work_ms,period_ms
+# task,H,5,15,100
+# task,M,7,40,300
+# task,L,9,180,1000
+# boot: reset cause 0x10 watchdog
+# boot: last words: fault "starve" injected at 1105 ms
+# boot: last words: task watchdog channel M expired at 1405 ms, M running
+# wdt: test starve, fault not armed
+# monitor: deadline = period for every job
+# run 1/1
+# rtoscope trace, cycle clock 240000000 Hz, 288 events, 0 dropped, trace call 143 cycles
+cycles,thread,event,prio,arg
+0,H,ready,5,
+2648,M,ready,7,
+4366,L,ready,9,
+5570,main,pend,0,
+5888,main,out,0,pending
+6799,H,in,5,
+27874,H,out,5,sleeping
+28560,M,in,7,
+30957,M,out,7,sleeping
+31669,L,in,9,
+33951,L,out,9,sleeping
+34340,idle,in,15,
+2205255,H,ready,5,
+2205932,M,ready,7,
+2206732,L,ready,9,
+2208030,idle,out,15,ready
+2208267,H,in,5,
+2208698,H,app,5,start
+5810936,H,app,5,done
+5816179,H,out,5,sleeping
+5817110,M,in,7,
+5817541,M,app,7,start
+15420502,M,app,7,done
+15423212,M,out,7,sleeping
+15424143,L,in,9,
+15424574,L,app,9,start
+26205268,H,ready,5,
+26206394,L,out,9,ready
+26206631,H,in,5,
+26207062,H,app,5,start
+29807746,H,app,5,done
+29810326,H,out,5,sleeping
+29811257,L,in,9,
+50205279,H,ready,5,
+50206247,L,out,9,ready
+50206484,H,in,5,
+50206915,H,app,5,start
+53809684,H,app,5,done
+53812316,H,out,5,sleeping
+53813247,L,in,9,
+65847993,L,app,9,done
+65850446,L,out,9,sleeping
+65850835,idle,in,15,
+74205218,M,ready,7,
+74205869,H,ready,5,
+74207148,idle,out,15,ready
+74207385,H,in,5,
+74207816,H,app,5,start
+77808151,H,app,5,done
+77810705,H,out,5,sleeping
+77811636,M,in,7,
+77812067,M,app,7,start
+87415000,M,app,7,done
+87417361,M,out,7,sleeping
+87417750,idle,in,15,
+98205218,H,ready,5,
+98206087,idle,out,15,ready
+98206324,H,in,5,
+98206755,H,app,5,start
+101807397,H,app,5,done
+101809784,H,out,5,sleeping
+101810173,idle,in,15,
+122205218,H,ready,5,
+122206105,idle,out,15,ready
+122206342,H,in,5,
+122206773,H,app,5,start
+125808596,H,app,5,done
+125810879,H,out,5,sleeping
+125811268,idle,in,15,
+146205218,M,ready,7,
+146205895,H,ready,5,
+146206929,idle,out,15,ready
+146207166,H,in,5,
+146207597,H,app,5,start
+149809352,H,app,5,done
+149811906,H,out,5,sleeping
+149812837,M,in,7,
+149813268,M,app,7,start
+159416162,M,app,7,done
+159418549,M,out,7,sleeping
+159418938,idle,in,15,
+170205218,H,ready,5,
+170206087,idle,out,15,ready
+170206324,H,in,5,
+170206755,H,app,5,start
+173807397,H,app,5,done
+173809784,H,out,5,sleeping
+173810173,idle,in,15,
+194205218,H,ready,5,
+194206105,idle,out,15,ready
+194206342,H,in,5,
+194206773,H,app,5,start
+197808596,H,app,5,done
+197810905,H,out,5,sleeping
+197811294,idle,in,15,
+218205218,M,ready,7,
+218205895,H,ready,5,
+218206929,idle,out,15,ready
+218207166,H,in,5,
+218207597,H,app,5,start
+221809378,H,app,5,done
+221812010,H,out,5,sleeping
+221812941,M,in,7,
+221813372,M,app,7,start
+231416305,M,app,7,done
+231418744,M,out,7,sleeping
+231419133,idle,in,15,
+242205218,L,ready,9,
+242205869,H,ready,5,
+242207148,idle,out,15,ready
+242207385,H,in,5,
+242207816,H,app,5,start
+245808459,H,app,5,done
+245811039,H,out,5,sleeping
+245811970,L,in,9,
+245812401,L,app,9,start
+266205258,H,ready,5,
+266206226,L,out,9,ready
+266206463,H,in,5,
+266206894,H,app,5,start
+269808717,H,app,5,done
+269811349,H,out,5,sleeping
+269812280,L,in,9,
+290205224,M,ready,7,
+290205982,H,ready,5,
+290207016,L,out,9,ready
+290207253,H,in,5,
+290207684,H,app,5,start
+293809481,H,app,5,done
+293812035,H,out,5,sleeping
+293812966,M,in,7,
+293813397,M,app,7,start
+303416319,M,app,7,done
+303419029,M,out,7,sleeping
+303419960,L,in,9,
+305843898,L,app,9,done
+305846325,L,out,9,sleeping
+305846714,idle,in,15,
+314205218,H,ready,5,
+314206087,idle,out,15,ready
+314206324,H,in,5,
+314206755,H,app,5,start
+317807090,H,app,5,done
+317809477,H,out,5,sleeping
+317809866,idle,in,15,
+338205218,H,ready,5,
+338206105,idle,out,15,ready
+338206342,H,in,5,
+338206773,H,app,5,start
+341808596,H,app,5,done
+341810879,H,out,5,sleeping
+341811268,idle,in,15,
+362205218,M,ready,7,
+362205895,H,ready,5,
+362206929,idle,out,15,ready
+362207166,H,in,5,
+362207597,H,app,5,start
+365809352,H,app,5,done
+365811906,H,out,5,sleeping
+365812837,M,in,7,
+365813268,M,app,7,start
+375416162,M,app,7,done
+375418549,M,out,7,sleeping
+375418938,idle,in,15,
+386205218,H,ready,5,
+386206087,idle,out,15,ready
+386206324,H,in,5,
+386206755,H,app,5,start
+389807397,H,app,5,done
+389809784,H,out,5,sleeping
+389810173,idle,in,15,
+410205218,H,ready,5,
+410206105,idle,out,15,ready
+410206342,H,in,5,
+410206773,H,app,5,start
+413808596,H,app,5,done
+413810879,H,out,5,sleeping
+413811268,idle,in,15,
+434205218,M,ready,7,
+434205895,H,ready,5,
+434206929,idle,out,15,ready
+434207166,H,in,5,
+434207597,H,app,5,start
+437809352,H,app,5,done
+437811932,H,out,5,sleeping
+437812863,M,in,7,
+437813294,M,app,7,start
+447416141,M,app,7,done
+447418554,M,out,7,sleeping
+447418943,idle,in,15,
+458205218,H,ready,5,
+458206087,idle,out,15,ready
+458206324,H,in,5,
+458206755,H,app,5,start
+461807397,H,app,5,done
+461809706,H,out,5,sleeping
+461810095,idle,in,15,
+482205218,L,ready,9,
+482205895,H,ready,5,
+482206929,idle,out,15,ready
+482207166,H,in,5,
+482207597,H,app,5,start
+485809378,H,app,5,done
+485812010,H,out,5,sleeping
+485812941,L,in,9,
+485813372,L,app,9,start
+506205224,M,ready,7,
+506205982,H,ready,5,
+506207016,L,out,9,ready
+506207253,H,in,5,
+506207684,H,app,5,start
+509809481,H,app,5,done
+509812035,H,out,5,sleeping
+509812966,M,in,7,
+509813397,M,app,7,start
+519416319,M,app,7,done
+519419029,M,out,7,sleeping
+519419960,L,in,9,
+530205224,H,ready,5,
+530206350,L,out,9,ready
+530206587,H,in,5,
+530207018,H,app,5,start
+533807659,H,app,5,done
+533810239,H,out,5,sleeping
+533811170,L,in,9,
+545843376,L,app,9,done
+545845274,L,out,9,dead
+545845663,idle,in,15,
+554205218,H,ready,5,
+554206087,idle,out,15,ready
+554206324,H,in,5,
+554206755,H,app,5,start
+557807090,H,app,5,done
+557809367,H,out,5,sleeping
+557809756,idle,in,15,
+578205218,M,ready,7,
+578205895,H,ready,5,
+578206929,idle,out,15,ready
+578207166,H,in,5,
+578207597,H,app,5,start
+581809346,H,app,5,done
+581811894,H,out,5,sleeping
+581812825,M,in,7,
+581813256,M,app,7,start
+591416189,M,app,7,done
+591418506,M,out,7,sleeping
+591418895,idle,in,15,
+602205218,H,ready,5,
+602206087,idle,out,15,ready
+602206324,H,in,5,
+602206755,H,app,5,start
+605807397,H,app,5,done
+605809778,H,out,5,sleeping
+605810167,idle,in,15,
+626205218,H,ready,5,
+626206105,idle,out,15,ready
+626206342,H,in,5,
+626206773,H,app,5,start
+629808590,H,app,5,done
+629810867,H,out,5,sleeping
+629811256,idle,in,15,
+650205218,M,ready,7,
+650205895,H,ready,5,
+650206929,idle,out,15,ready
+650207166,H,in,5,
+650207597,H,app,5,start
+653809346,H,app,5,done
+653811894,H,out,5,sleeping
+653812825,M,in,7,
+653813256,M,app,7,start
+663416189,M,app,7,done
+663418081,M,out,7,dead
+663418470,idle,in,15,
+674205218,H,ready,5,
+674206087,idle,out,15,ready
+674206324,H,in,5,
+674206755,H,app,5,start
+677807397,H,app,5,done
+677809670,H,out,5,sleeping
+677810059,idle,in,15,
+698205218,H,ready,5,
+698206105,idle,out,15,ready
+698206342,H,in,5,
+698206773,H,app,5,start
+701808534,H,app,5,done
+701809876,main,ready,0,
+701811597,H,out,5,dead
+701812528,main,in,0,
+# crc32 87178e70
+# monitor: deadline misses so far H 0, M 0, L 0
+# rtoscope runs done

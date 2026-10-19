@@ -16,6 +16,13 @@ void trace_stop(void);
  */
 void trace_app(const char *what);
 
+/* Record a monitor finding about any thread (not necessarily the current
+ * one); safe from ISR context, e.g. a k_timer expiry. prio is the thread's
+ * priority at that moment. what must be a string literal.
+ */
+struct k_thread;
+void trace_mon(struct k_thread *thread, const char *what);
+
 /* Print the buffer as CSV over the console, followed by a CRC-32 of the
  * dump ("# crc32 xxxxxxxx"). Call after trace_stop().
  */

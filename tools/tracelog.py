@@ -21,7 +21,7 @@ from pathlib import Path
 TRACE_RE = re.compile(r"^# rtoscope trace, cycle clock (?P<hz>\d+) Hz, (?P<n>\d+) events, "
                       r"(?P<dropped>\d+) dropped, trace call (?P<call>\d+) cycles$")
 CRC_RE = re.compile(r"^# crc32 (?P<crc>[0-9a-f]{8})$")
-EVENT_RE = re.compile(r"^(?P<cyc>\d+),(?P<thread>[^,]+),(?P<event>in|out|ready|pend|prio|app),"
+EVENT_RE = re.compile(r"^(?P<cyc>\d+),(?P<thread>[^,]+),(?P<event>in|out|ready|pend|prio|app|mon),"
                       r"(?P<prio>-?\d+),(?P<arg>.*)$")
 
 

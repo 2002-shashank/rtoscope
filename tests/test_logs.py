@@ -12,8 +12,9 @@ import response_times
 import tracelog
 from conftest import LOGS
 
-TRACED = sorted(LOGS.glob("step4_*.log")) + [LOGS / "step5_periodic.log",
-                                             LOGS / "step6_repeat.log"]
+# Every capture made with the scheduler trace (step 3 logs predate it).
+TRACED = sorted(p for p in LOGS.glob("step*_*.log") if not p.name.startswith("step3_")
+                and not p.name.startswith("step2_"))
 INVERSION = sorted(LOGS.glob("step4_*.log"))
 
 

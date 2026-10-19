@@ -38,6 +38,10 @@ C_RUNNING = "#2a78d6"
 C_BLOCKED = "#eb6834"
 C_LOCK = "#1baf7a"
 C_READY = "#c9c8c2"
+C_ALARM = "#d03b3b"  # status "critical": always with a marker + text label
+
+# Monitor findings drawn on the victim's row (app/src/monitor.c).
+ALARMS = {"deadline miss": "deadline miss", "blocked too long": "blocking budget exceeded"}
 
 HEADER_RE = re.compile(r"rtoscope step 3: (?P<mode>.*?), M work (?P<mwork>\d+) ms")
 
@@ -155,6 +159,15 @@ def draw(ax, run, st, origin, xmax_ms):
             ax.text(rel(t0) + 1, y - 0.45, "holds lock", color=INK_2, fontsize=7.5, va="top")
         for t in st["releases"][th]:
             ax.plot(rel(t), y + 0.33, marker="v", markersize=7, color=INK_2, linestyle="none")
+        # On the bar, labels below it, each one step lower than the last so
+        # neighbouring alarms can't overprint (the arrow above is H's wait).
+        alarms = [e for e in run.events if e.event == "mon" and e.thread == th and e.arg in ALARMS]
+        for k, e in enumerate(alarms):
+            ax.plot(rel(e.t), y, marker="X", markersize=9, color=C_ALARM,
+                    markeredgecolor=SURFACE, linestyle="none", zorder=5)
+            ax.annotate(f"{ALARMS[e.arg]} ({rel(e.t):.0f} ms)", xy=(rel(e.t), y - 0.25),
+                        xytext=(0, -3 - 10 * k), textcoords="offset points", ha="center",
+                        va="top", fontsize=7.5, color=INK)
         for t0, t1, prio in st["boosts"][th]:
             # Right of the boosted span, above the gray line: clear of the
             # release marker even when the span is only a few pixels wide.
@@ -221,7 +234,10 @@ def plot_pair(left, right, out):
         Patch(facecolor=C_READY, label="ready, preempted"),
         Patch(facecolor=C_LOCK, label="holds the mutex"),
         plt.Line2D([], [], marker="v", color=INK_2, linestyle="none", label="release"),
-    ], loc="upper right", ncol=5, frameon=False, fontsize=9, labelcolor=INK,
+        *([plt.Line2D([], [], marker="X", color=C_ALARM, linestyle="none",
+                      label="monitor alarm")]
+          if any(e.event == "mon" for r in runs for e in r.events) else []),
+    ], loc="upper right", ncol=6, frameon=False, fontsize=9, labelcolor=INK,
         bbox_to_anchor=(1, 0.94))
     fig.tight_layout(rect=(0, 0, 1, 0.88))
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -246,6 +262,8 @@ def main():
               ROOT / "docs" / "step4_timeline.png")
     plot_pair(logs / "step4_nopi_m400.log", logs / "step4_pi_m400.log",
               ROOT / "docs" / "step4_timeline_m400.png")
+    plot_pair(logs / "step7_nopi_mon.log", logs / "step7_pi_mon.log",
+              ROOT / "docs" / "step7_monitor_timeline.png")
 
 
 if __name__ == "__main__":

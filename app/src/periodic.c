@@ -8,13 +8,23 @@
  * A run lasts CONFIG_RTOSCOPE_PERIODIC_HYPERPERIODS hyperperiods, then every
  * thread exits and main dumps the scheduler trace (trace.c). Nothing is
  * printed during a run. One boot does CONFIG_RTOSCOPE_PERIODIC_RUNS runs.
+ *
+ * Optional (phase 2, step 4): every job's deadline is monitored
+ * (CONFIG_RTOSCOPE_MONITOR), M's 3rd job can overrun on purpose
+ * (CONFIG_RTOSCOPE_INJECT_OVERRUN), and each thread can feed its own task
+ * watchdog channel, with a controlled fault in M's 4th job
+ * (CONFIG_RTOSCOPE_WDT, CONFIG_RTOSCOPE_WDT_TEST_*).
  */
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 
 #include "burn.h"
+#include "monitor.h"
 #include "trace.h"
+#if defined(CONFIG_RTOSCOPE_WDT)
+#include "watchdog.h"
+#endif
 
 #define STACK_SIZE 2048
 
@@ -32,6 +42,11 @@ static const struct task_cfg tasks[] = {
 };
 
 #define NUM_TASKS ARRAY_SIZE(tasks)
+#define TASK_M    1
+
+#define OVERRUN_JOB 3      /* CONFIG_RTOSCOPE_INJECT_OVERRUN: M's 3rd job... */
+#define OVERRUN_MS  300    /* ...burns this much extra: a deadline miss */
+#define FAULT_JOB   4      /* CONFIG_RTOSCOPE_WDT_TEST_*: M's 4th job hangs */
 
 K_THREAD_STACK_ARRAY_DEFINE(stacks, NUM_TASKS, STACK_SIZE);
 static struct k_thread threads[NUM_TASKS];
@@ -45,15 +60,61 @@ static int64_t release_ms;
 /* No job is released at or after this time (uptime ms). */
 static int64_t end_ms;
 
+static struct mon_deadline deadlines[NUM_TASKS];
+
+/* False on a boot that follows a watchdog test reset: inject only once. */
+static bool inject_wdt_fault;
+
+#if defined(CONFIG_RTOSCOPE_WDT)
+static void report_misses(void)
+{
+	printk("# monitor: deadline misses so far H %u, M %u, L %u\n", deadlines[0].misses,
+	       deadlines[1].misses, deadlines[2].misses);
+}
+#endif
+
+/* Never returns: the watchdog has to end it. */
+static void wdt_fault(void)
+{
+#if defined(CONFIG_RTOSCOPE_WDT)
+	if (IS_ENABLED(CONFIG_RTOSCOPE_WDT_TEST_STARVE)) {
+		/* Preemptible: H keeps running, L starves, M stops feeding. */
+		watchdog_note_fault("starve");
+		trace_app("fault: starve");
+		while (true) {
+			arch_nop();
+		}
+	}
+	/* Interrupts locked: no scheduler, no task_wdt timer. Only TIMG0. */
+	watchdog_note_fault("hang");
+	(void)irq_lock();
+	while (true) {
+		arch_nop();
+	}
+#endif
+}
+
 static void task_entry(void *p1, void *p2, void *p3)
 {
 	const struct task_cfg *cfg = p1;
+	const int idx = cfg - tasks;
 	int64_t next = release_ms;
+	int channel = -1;
 
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
 
-	while (next < end_ms) {
+#if defined(CONFIG_RTOSCOPE_WDT)
+	/* 2x the period: one late job is tolerated, a stalled thread is not. */
+	channel = watchdog_add(cfg->name, 2 * cfg->period_ms);
+#endif
+
+	for (int job = 1; next < end_ms; job++) {
+		/* Arm before sleeping: a job starved past its deadline still trips it. */
+		if (IS_ENABLED(CONFIG_RTOSCOPE_MONITOR)) {
+			mon_deadline_arm(&deadlines[idx], next + cfg->period_ms);
+		}
+
 		/* Absolute release time: a relative k_msleep(period) would drift by
 		 * however long the work (and any preemption) took.
 		 */
@@ -61,10 +122,31 @@ static void task_entry(void *p1, void *p2, void *p3)
 
 		trace_app("start");
 		burn_cpu_ms(cfg->work_ms);
+		if (IS_ENABLED(CONFIG_RTOSCOPE_INJECT_OVERRUN) && idx == TASK_M &&
+		    job == OVERRUN_JOB) {
+			trace_app("overrun");
+			burn_cpu_ms(OVERRUN_MS);
+		}
+		if (inject_wdt_fault && idx == TASK_M && job == FAULT_JOB) {
+			wdt_fault();
+		}
 		trace_app("done");
 
+		if (IS_ENABLED(CONFIG_RTOSCOPE_MONITOR)) {
+			mon_deadline_done(&deadlines[idx]);
+		}
+#if defined(CONFIG_RTOSCOPE_WDT)
+		watchdog_feed(channel);
+#endif
 		next += cfg->period_ms;
 	}
+
+#if defined(CONFIG_RTOSCOPE_WDT)
+	/* A channel left behind by an exited thread would expire. */
+	watchdog_remove(channel);
+#else
+	ARG_UNUSED(channel);
+#endif
 }
 
 static uint32_t gcd(uint32_t a, uint32_t b)
@@ -95,6 +177,26 @@ int main(void)
 		       tasks[i].work_ms, tasks[i].period_ms);
 	}
 
+#if defined(CONFIG_RTOSCOPE_WDT)
+	bool recovered = watchdog_boot_report();
+
+	inject_wdt_fault = !recovered && !IS_ENABLED(CONFIG_RTOSCOPE_WDT_TEST_NONE);
+	printk("# wdt: test %s, fault %s\n",
+	       IS_ENABLED(CONFIG_RTOSCOPE_WDT_TEST_STARVE) ? "starve" :
+	       IS_ENABLED(CONFIG_RTOSCOPE_WDT_TEST_HANG) ? "hang" : "none",
+	       inject_wdt_fault ? "armed (M, job 4)" : "not armed");
+	watchdog_set_report_hook(report_misses);
+	if (watchdog_start() != 0) {
+		printk("# wdt: task_wdt_init failed\n");
+	}
+#endif
+	if (IS_ENABLED(CONFIG_RTOSCOPE_MONITOR)) {
+		printk("# monitor: deadline = period for every job\n");
+	}
+	for (int i = 0; i < NUM_TASKS; i++) {
+		mon_deadline_init(&deadlines[i], &threads[i]);
+	}
+
 	for (int run = 1; run <= CONFIG_RTOSCOPE_PERIODIC_RUNS; run++) {
 		/* All three sleep until the same release time, slightly in the
 		 * future, so the first period starts together no matter how long
@@ -121,6 +223,10 @@ int main(void)
 		trace_stop();
 		printk("# run %d/%d\n", run, CONFIG_RTOSCOPE_PERIODIC_RUNS);
 		trace_dump();
+		if (IS_ENABLED(CONFIG_RTOSCOPE_MONITOR)) {
+			printk("# monitor: deadline misses so far H %u, M %u, L %u\n",
+			       deadlines[0].misses, deadlines[1].misses, deadlines[2].misses);
+		}
 	}
 
 	printk("# rtoscope runs done\n");
