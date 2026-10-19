@@ -12,6 +12,15 @@ config RTOSCOPE_DEMO_INVERSION
 
 endchoice
 
+config RTOSCOPE_PERIODIC_HYPERPERIODS
+	int "Hyperperiods to run before dumping the trace"
+	depends on RTOSCOPE_DEMO_PERIODIC
+	range 1 4
+	default 2
+	help
+	  One hyperperiod of the step 2 task set (3000 ms) is about 450
+	  trace records; the ring buffer (TRACE_LEN in trace.c) holds 2048.
+
 if RTOSCOPE_DEMO_INVERSION
 
 choice RTOSCOPE_LOCK

@@ -37,8 +37,10 @@ struct rec {
 	uint8_t pad;
 };
 
-/* Power of two, so the slot index is a mask, not a division. */
-#define TRACE_LEN 512
+/* Power of two, so the slot index is a mask, not a division.
+ * 2048 x 16 B = 32 KB: room for several hyperperiods of the periodic demo.
+ */
+#define TRACE_LEN 2048
 BUILD_ASSERT(IS_POWER_OF_TWO(TRACE_LEN));
 
 static struct rec ring[TRACE_LEN];

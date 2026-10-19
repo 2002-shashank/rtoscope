@@ -14,7 +14,7 @@ import argparse
 import re
 import statistics
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib
@@ -22,6 +22,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
+
+import tracelog
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -38,19 +40,6 @@ C_LOCK = "#1baf7a"
 C_READY = "#c9c8c2"
 
 HEADER_RE = re.compile(r"rtoscope step 3: (?P<mode>.*?), M work (?P<mwork>\d+) ms")
-TRACE_RE = re.compile(r"^# rtoscope trace, cycle clock (?P<hz>\d+) Hz, (?P<n>\d+) events, "
-                      r"(?P<dropped>\d+) dropped, trace call (?P<call>\d+) cycles$")
-EVENT_RE = re.compile(r"^(?P<cyc>\d+),(?P<thread>[^,]+),(?P<event>in|out|ready|pend|prio|app),"
-                      r"(?P<prio>-?\d+),(?P<arg>.*)$")
-
-
-@dataclass
-class Event:
-    t: float          # µs since the first trace record
-    thread: str
-    event: str
-    prio: int
-    arg: str
 
 
 @dataclass
@@ -60,33 +49,20 @@ class Run:
     m_work_ms: int
     hz: int
     call_cycles: int
-    events: list = field(default_factory=list)
+    events: list
 
 
 def parse_log(path):
-    """Pull the run header, trace header and CSV records out of a raw capture."""
-    mode = m_work = hz = call = None
-    expected = None
-    events = []
-    # errors="replace": captures start with ROM bootloader output and can end
-    # mid-line, so don't assume clean UTF-8 or a complete last line.
-    for raw in path.read_text(errors="replace").splitlines():
-        line = raw.strip()  # also drops the \r from the board's \r\n
-        if m := HEADER_RE.search(line):
-            mode, m_work = m["mode"], int(m["mwork"])
-            events, hz = [], None  # a reboot mid-capture starts a new run
-        elif m := TRACE_RE.match(line):
-            hz, call, expected = int(m["hz"]), int(m["call"]), int(m["n"])
-            if int(m["dropped"]):
-                sys.exit(f"{path}: ring buffer dropped {m['dropped']} events; enlarge TRACE_LEN")
-        elif hz and (m := EVENT_RE.match(line)):
-            events.append(Event(int(m["cyc"]) * 1e6 / hz, m["thread"], m["event"],
-                                int(m["prio"]), m["arg"]))
-    if mode is None or hz is None:
-        sys.exit(f"{path}: no traced step 3 run found")
-    if len(events) != expected:
-        sys.exit(f"{path}: header says {expected} events, parsed {len(events)} (truncated capture?)")
-    return Run(path, mode, m_work, hz, call, events)
+    """The step 3 run header plus the trace (parsed by tracelog)."""
+    try:
+        trace = tracelog.parse(path)
+    except tracelog.TraceError as err:
+        sys.exit(str(err))
+    headers = [m for ln in trace.lines if (m := HEADER_RE.search(ln))]
+    if not headers:
+        sys.exit(f"{path}: no step 3 run header")
+    m = headers[-1]
+    return Run(trace.path, m["mode"], int(m["mwork"]), trace.hz, trace.call_cycles, trace.events)
 
 
 def app_time(run, thread, label):
