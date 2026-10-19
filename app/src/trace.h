@@ -16,7 +16,9 @@ void trace_stop(void);
  */
 void trace_app(const char *what);
 
-/* Print the buffer as CSV over the console. Call after trace_stop(). */
+/* Print the buffer as CSV over the console, followed by a CRC-32 of the
+ * dump ("# crc32 xxxxxxxx"). Call after trace_stop().
+ */
 void trace_dump(void);
 
 #endif

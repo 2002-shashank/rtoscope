@@ -5,9 +5,9 @@
  * ("work"), log "done". Periods collide, so a higher-priority thread wakes up
  * while a lower one is mid-work and preempts it.
  *
- * The run lasts CONFIG_RTOSCOPE_PERIODIC_HYPERPERIODS hyperperiods, then every
+ * A run lasts CONFIG_RTOSCOPE_PERIODIC_HYPERPERIODS hyperperiods, then every
  * thread exits and main dumps the scheduler trace (trace.c). Nothing is
- * printed during the run.
+ * printed during a run. One boot does CONFIG_RTOSCOPE_PERIODIC_RUNS runs.
  */
 
 #include <zephyr/kernel.h>
@@ -95,27 +95,34 @@ int main(void)
 		       tasks[i].work_ms, tasks[i].period_ms);
 	}
 
-	/* All three sleep until the same release time, slightly in the future,
-	 * so the first period starts together no matter how long thread
-	 * creation takes. They then wake together and the scheduler picks H.
-	 */
-	release_ms = k_uptime_get() + 10;
-	end_ms = release_ms + (int64_t)CONFIG_RTOSCOPE_PERIODIC_HYPERPERIODS * hyper_ms;
-	trace_start();
+	for (int run = 1; run <= CONFIG_RTOSCOPE_PERIODIC_RUNS; run++) {
+		/* All three sleep until the same release time, slightly in the
+		 * future, so the first period starts together no matter how long
+		 * thread creation takes. They then wake together and the
+		 * scheduler picks H.
+		 */
+		release_ms = k_uptime_get() + 10;
+		end_ms = release_ms + (int64_t)CONFIG_RTOSCOPE_PERIODIC_HYPERPERIODS * hyper_ms;
+		trace_start();
 
-	for (int i = 0; i < NUM_TASKS; i++) {
-		k_tid_t tid = k_thread_create(&threads[i], stacks[i],
-					      K_THREAD_STACK_SIZEOF(stacks[i]),
-					      task_entry, (void *)&tasks[i], NULL, NULL,
-					      tasks[i].prio, 0, K_NO_WAIT);
-		k_thread_name_set(tid, tasks[i].name);
+		/* Reusing a k_thread is fine once k_thread_join() has seen it exit. */
+		for (int i = 0; i < NUM_TASKS; i++) {
+			k_tid_t tid = k_thread_create(&threads[i], stacks[i],
+						      K_THREAD_STACK_SIZEOF(stacks[i]),
+						      task_entry, (void *)&tasks[i], NULL, NULL,
+						      tasks[i].prio, 0, K_NO_WAIT);
+			k_thread_name_set(tid, tasks[i].name);
+		}
+
+		for (int i = 0; i < NUM_TASKS; i++) {
+			k_thread_join(&threads[i], K_FOREVER);
+		}
+
+		trace_stop();
+		printk("# run %d/%d\n", run, CONFIG_RTOSCOPE_PERIODIC_RUNS);
+		trace_dump();
 	}
 
-	for (int i = 0; i < NUM_TASKS; i++) {
-		k_thread_join(&threads[i], K_FOREVER);
-	}
-
-	trace_stop();
-	trace_dump();
+	printk("# rtoscope runs done\n");
 	return 0;
 }

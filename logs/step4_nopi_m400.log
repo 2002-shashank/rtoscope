@@ -9,7 +9,7 @@ load:0x40080000,len:33088
 load:0x50000000,len:40
 entry 0x40083870
 I (soc_init): ESP Simple boot
-I (soc_init): compile time Oct 18 2026 20:51:00
+I (soc_init): compile time Oct 18 2026 21:35:37
 W (soc_init): Unicore bootloader
 I (soc_init): chip revision: v3.1
 I (flash_init): SPI Speed      : 40MHz
@@ -18,12 +18,12 @@ I (flash_init): SPI Flash Size : 4MB
 I (boot): DRAM	: lma=00001020h vma=3ffb0000h size=01b08h (  6920)
 I (boot): IRAM	: lma=00002b30h vma=40080000h size=08140h ( 33088)
 I (boot): RTC_DATA	: lma=0000ac78h vma=50000000h size=00028h (    40)
-I (boot): IROM	: lma=00010000h vma=400d0000h size=03680h ( 13952)
+I (boot): IROM	: lma=00010000h vma=400d0000h size=037b0h ( 14256)
 I (boot): DROM	: lma=00020000h vma=3f400000h size=10000h ( 65536)
 I (boot): IROM	: lma=00030020h vma=400d0020h size=9233ch (598844)
 I (boot): DRAM	: lma=000c2364h vma=3ffc010ch size=03efch ( 16124)
 I (boot): IRAM	: lma=000c6268h vma=40080000h size=12bcch ( 76748)
-I (boot): libc heap size 171 kB.
+I (boot): libc heap size 147 kB.
 I (spi_flash): detected chip: generic
 I (spi_flash): flash io: dio
 *** Booting Zephyr OS build v4.4.2 ***
@@ -31,50 +31,51 @@ rtoscope step 3: k_mutex, priority inheritance OFF (CONFIG_PRIORITY_CEILING), M 
 # rtoscope trace, cycle clock 240000000 Hz, 48 events, 0 dropped, trace call 143 cycles
 cycles,thread,event,prio,arg
 0,L,ready,9,
-1695,M,ready,7,
-3420,H,ready,5,
-4539,main,pend,0,
-4857,main,out,0,pending
-5714,H,in,5,
-9987,H,out,5,sleeping
-10635,M,in,7,
-15518,M,out,7,sleeping
-16204,L,in,9,
-21016,L,out,9,sleeping
-21405,idle,in,15,
-2301157,L,ready,9,
-2302046,idle,out,15,ready
-2302283,L,in,9,
-2302714,L,app,9,lock request
-2302890,L,app,9,locked
-4701171,H,ready,5,
-4702101,L,out,9,ready
-4702338,H,in,5,
-4703716,H,app,5,lock request
-4704354,H,pend,5,
-4704672,H,out,5,pending
-4705300,L,in,9,
-7101169,M,ready,7,
-7102239,L,out,9,ready
-7102476,M,in,7,
-7102907,M,app,7,start
-103126997,M,app,7,done
-103128118,M,out,7,dead
-103128995,L,in,9,
-110336625,L,app,9,unlock
-110336860,H,ready,5,
-110337872,L,out,9,ready
-110338749,H,in,5,
-110339079,H,app,5,locked
-112739392,H,app,5,unlock
-112739578,H,app,5,done
-112739929,main,ready,0,
-112741556,H,out,5,dead
-112742433,main,in,0,
-112743463,main,pend,0,
-112743781,main,out,0,pending
-112744638,L,in,9,
-112745005,L,app,9,done
-112745363,main,ready,0,
-112746976,L,out,9,dead
-112747853,main,in,0,
+3608,M,ready,7,
+5320,H,ready,5,
+6440,main,pend,0,
+6758,main,out,0,pending
+7615,H,in,5,
+12854,H,out,5,sleeping
+13502,M,in,7,
+17427,M,out,7,sleeping
+18113,L,in,9,
+22922,L,out,9,sleeping
+23311,idle,in,15,
+2304277,L,ready,9,
+2305166,idle,out,15,ready
+2305403,L,in,9,
+2305834,L,app,9,lock request
+2306010,L,app,9,locked
+4704344,H,ready,5,
+4705274,L,out,9,ready
+4705511,H,in,5,
+4705942,H,app,5,lock request
+4706580,H,pend,5,
+4706898,H,out,5,pending
+4707526,L,in,9,
+7104319,M,ready,7,
+7105389,L,out,9,ready
+7105626,M,in,7,
+7106057,M,app,7,start
+103130145,M,app,7,done
+103131266,M,out,7,dead
+103132143,L,in,9,
+110338849,L,app,9,unlock
+110339084,H,ready,5,
+110340096,L,out,9,ready
+110340973,H,in,5,
+110341303,H,app,5,locked
+112741616,H,app,5,unlock
+112741802,H,app,5,done
+112742153,main,ready,0,
+112743780,H,out,5,dead
+112744657,main,in,0,
+112745687,main,pend,0,
+112746005,main,out,0,pending
+112746862,L,in,9,
+112747229,L,app,9,done
+112747587,main,ready,0,
+112749200,L,out,9,dead
+112750077,main,in,0,
+# crc32 5197fbd0

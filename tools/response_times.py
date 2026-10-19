@@ -75,28 +75,39 @@ def rta(tasks, c_of=lambda t: t.c_us, j_of=lambda t: 0.0):
     return out
 
 
-def release_jitter(trace, task):
-    """Worst delay from a release to the CPU serving this priority level.
+def release_jitters(trace, task):
+    """Per job: delay from its release to the CPU serving this priority level.
 
     That is: from the "ready" ending a sleep to the next switch-in of any
     thread at this priority or better. Waiting for higher-priority work after
     that is interference, which the recurrence's sum already counts; only the
     ISR tail and switch before it are jitter.
     """
-    worst, sleeping, ready_at = 0.0, False, None
+    out, sleeping, ready_at = [], False, None
     for e in trace.events:
         if e.thread == task.name and e.event == "out":
             sleeping = e.arg == "sleeping"
         elif e.thread == task.name and e.event == "ready" and sleeping:
             ready_at, sleeping = e.t, False
         elif e.event == "in" and ready_at is not None and e.prio <= task.prio:
-            worst, ready_at = max(worst, e.t - ready_at), None
-    return worst
+            out.append(e.t - ready_at)
+            ready_at = None
+    return out
+
+
+def release_jitter(trace, task):
+    return max(release_jitters(trace, task))
+
+
+def switch_gaps(trace):
+    """(kind, µs) for every out -> in pair; kind is "preempted" or "voluntary"."""
+    return [("preempted" if a.arg == "ready" else "voluntary", b.t - a.t)
+            for a, b in zip(trace.events, trace.events[1:])
+            if a.event == "out" and b.event == "in"]
 
 
 def worst_switch_gap(trace):
-    return max(b.t - a.t for a, b in zip(trace.events, trace.events[1:])
-               if a.event == "out" and b.event == "in")
+    return max(gap for _, gap in switch_gaps(trace))
 
 
 def simulate(tasks, horizon_us):
@@ -126,7 +137,7 @@ def simulate(tasks, horizon_us):
 
 
 def main():
-    path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "logs" / "step5_periodic.log"
+    path = (Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "logs" / "step5_periodic.log").resolve()
     trace = tracelog.parse(path)
     tasks, (n_hyper, hyper_us) = read_tasks(trace)
 

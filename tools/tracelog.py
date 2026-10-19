@@ -7,14 +7,20 @@ boot lines, the demo's own header lines, then the trace:
     cycles,thread,event,prio,arg
     0,L,ready,9,
     ...
+    # crc32 1a2b3c4d
+
+The CRC-32 covers every dump line before it (each with its "\n"). The serial
+path can lose bytes mid-line, and a lost digit would still parse.
 """
 
 import re
+import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
 
 TRACE_RE = re.compile(r"^# rtoscope trace, cycle clock (?P<hz>\d+) Hz, (?P<n>\d+) events, "
                       r"(?P<dropped>\d+) dropped, trace call (?P<call>\d+) cycles$")
+CRC_RE = re.compile(r"^# crc32 (?P<crc>[0-9a-f]{8})$")
 EVENT_RE = re.compile(r"^(?P<cyc>\d+),(?P<thread>[^,]+),(?P<event>in|out|ready|pend|prio|app),"
                       r"(?P<prio>-?\d+),(?P<arg>.*)$")
 
@@ -37,38 +43,74 @@ class Trace:
     path: Path
     hz: int
     call_cycles: int
-    lines: list                       # every stripped line before the trace header
+    lines: list                       # stripped lines since the previous trace ended
     events: list = field(default_factory=list)
+    error: str | None = None          # set (strict=False only) if the dump is corrupt
 
 
-def parse(path):
-    """Return the last complete trace in the capture at path.
+def parse_all(path, strict=True):
+    """Return every trace in the capture at path, in order.
 
-    Raises TraceError if there is no trace, if the ring buffer dropped
-    records, or if the dump was cut off.
+    Each trace's lines are those printed between the previous trace's last
+    line and its own header; for the first trace that includes the boot
+    output and the demo's header.
+
+    A trace is corrupt if its CRC-32 is missing or wrong, if its record count
+    doesn't match the header, or if the ring buffer dropped records. With
+    strict=True that raises TraceError; with strict=False the trace is
+    returned with .error set, so a caller can skip one bad run of many.
     """
     path = Path(path)
     # errors="replace": captures start with ROM bootloader output and can end
     # mid-line, so don't assume clean UTF-8 or a complete last line.
     raw_lines = [ln.strip() for ln in path.read_text(errors="replace").splitlines()]
 
-    start = max((i for i, ln in enumerate(raw_lines) if TRACE_RE.match(ln)), default=None)
-    if start is None:
-        raise TraceError(f"{path}: no trace header")
-    m = TRACE_RE.match(raw_lines[start])
-    if int(m["dropped"]):
-        raise TraceError(f"{path}: ring buffer dropped {m['dropped']} records; enlarge TRACE_LEN")
+    traces, i, prev_end = [], 0, 0
+    while i < len(raw_lines):
+        m = TRACE_RE.match(raw_lines[i])
+        if not m:
+            i += 1
+            continue
+        hz, expected = int(m["hz"]), int(m["n"])
+        trace = Trace(path, hz, int(m["call"]), raw_lines[prev_end:i])
+        crc = zlib.crc32((raw_lines[i] + "\n").encode())
+        i += 1
+        # The dump body runs to its CRC line (or, if that was lost, to the
+        # next trace header or the end of the capture).
+        while i < len(raw_lines) and not CRC_RE.match(raw_lines[i]) \
+                and not TRACE_RE.match(raw_lines[i]):
+            crc = zlib.crc32((raw_lines[i] + "\n").encode(), crc)
+            if e := EVENT_RE.match(raw_lines[i]):
+                trace.events.append(Event(int(e["cyc"]) * 1e6 / hz, e["thread"], e["event"],
+                                          int(e["prio"]), e["arg"]))
+            i += 1
+        got = CRC_RE.match(raw_lines[i]) if i < len(raw_lines) else None
+        if got:
+            i += 1
 
-    hz = int(m["hz"])
-    trace = Trace(path, hz, int(m["call"]), raw_lines[:start])
-    for ln in raw_lines[start + 1:]:
-        if e := EVENT_RE.match(ln):
-            trace.events.append(Event(int(e["cyc"]) * 1e6 / hz, e["thread"], e["event"],
-                                      int(e["prio"]), e["arg"]))
-    if len(trace.events) != int(m["n"]):
-        raise TraceError(f"{path}: header says {m['n']} records, parsed {len(trace.events)} "
-                         f"(truncated capture?)")
-    return trace
+        where = f"{path}: trace {len(traces) + 1}"
+        if int(m["dropped"]):
+            trace.error = f"{where}: ring buffer dropped {m['dropped']} records; enlarge TRACE_LEN"
+        elif not got:
+            trace.error = f"{where}: no crc32 line (truncated capture, or firmware without it)"
+        elif int(got["crc"], 16) != crc:
+            trace.error = (f"{where}: crc32 mismatch (board {got['crc']}, computed {crc:08x}): "
+                           f"bytes lost or changed in transit")
+        elif len(trace.events) != expected:
+            trace.error = (f"{where}: header says {expected} records, parsed "
+                           f"{len(trace.events)}")
+        if trace.error and strict:
+            raise TraceError(trace.error)
+        traces.append(trace)
+        prev_end = i
+    if not traces:
+        raise TraceError(f"{path}: no trace header")
+    return traces
+
+
+def parse(path):
+    """Return the last trace in the capture at path (see parse_all)."""
+    return parse_all(path)[-1]
 
 
 def jobs(trace, thread):

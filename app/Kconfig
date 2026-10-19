@@ -18,8 +18,18 @@ config RTOSCOPE_PERIODIC_HYPERPERIODS
 	range 1 4
 	default 2
 	help
-	  One hyperperiod of the step 2 task set (3000 ms) is about 450
+	  One hyperperiod of the step 2 task set (3000 ms) is about 280
 	  trace records; the ring buffer (TRACE_LEN in trace.c) holds 2048.
+
+config RTOSCOPE_PERIODIC_RUNS
+	int "Runs per boot"
+	depends on RTOSCOPE_DEMO_PERIODIC
+	range 1 1000
+	default 1
+	help
+	  Repeat the whole run (fresh release time, new threads, new trace)
+	  this many times in one boot, dumping the trace after each, then
+	  print "# rtoscope runs done".
 
 if RTOSCOPE_DEMO_INVERSION
 

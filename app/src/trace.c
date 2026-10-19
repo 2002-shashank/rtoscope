@@ -9,8 +9,11 @@
  * Thread names, formatting and UART output all happen in trace_dump().
  */
 
+#include <stdarg.h>
+
 #include <zephyr/kernel.h>
 #include <zephyr/kernel_structs.h>
+#include <zephyr/sys/crc.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
 
@@ -162,16 +165,37 @@ static const char *state_name(uint8_t s)
 	return "ready";  /* still runnable: it was preempted */
 }
 
+/*
+ * Print one dump line and fold it into the running CRC. The UART -> USB ->
+ * host path can lose bytes (seen once in 690 KB on the CYD's CH340); a lost
+ * digit would still parse, so the record count alone can't catch it.
+ */
+static uint32_t dump_line(uint32_t crc, const char *fmt, ...)
+{
+	char line[96];
+	va_list ap;
+	int len;
+
+	va_start(ap, fmt);
+	len = vsnprintk(line, sizeof(line), fmt, ap);
+	va_end(ap);
+	len = MIN(len, (int)sizeof(line) - 1);
+
+	printk("%s", line);
+	return crc32_ieee_update(crc, (const uint8_t *)line, len);
+}
+
 void trace_dump(void)
 {
 	uint32_t n = MIN(head, TRACE_LEN);
 	uint32_t first = head - n;
 	uint32_t t0 = ring[first & (TRACE_LEN - 1)].cyc;
+	uint32_t crc = 0;
 
-	printk("# rtoscope trace, cycle clock %u Hz, %u events, %u dropped, "
-	       "trace call %u cycles\n",
-	       sys_clock_hw_cycles_per_sec(), n, head - n, call_cycles);
-	printk("cycles,thread,event,prio,arg\n");
+	crc = dump_line(crc, "# rtoscope trace, cycle clock %u Hz, %u events, %u dropped, "
+			"trace call %u cycles\n",
+			sys_clock_hw_cycles_per_sec(), n, head - n, call_cycles);
+	crc = dump_line(crc, "cycles,thread,event,prio,arg\n");
 
 	for (uint32_t i = first; i < head; i++) {
 		const struct rec *r = &ring[i & (TRACE_LEN - 1)];
@@ -181,11 +205,14 @@ void trace_dump(void)
 
 		/* Unsigned subtraction stays correct across one CCOUNT wrap. */
 		if (name != NULL && name[0] != '\0') {
-			printk("%u,%s,%s,%d,%s\n", r->cyc - t0, name,
-			       ev_names[r->type], r->prio, arg);
+			crc = dump_line(crc, "%u,%s,%s,%d,%s\n", r->cyc - t0, name,
+					ev_names[r->type], r->prio, arg);
 		} else {
-			printk("%u,%p,%s,%d,%s\n", r->cyc - t0, r->thread,
-			       ev_names[r->type], r->prio, arg);
+			crc = dump_line(crc, "%u,%p,%s,%d,%s\n", r->cyc - t0, r->thread,
+					ev_names[r->type], r->prio, arg);
 		}
 	}
+
+	/* CRC-32 (IEEE, same as Python's zlib.crc32) of every line above. */
+	printk("# crc32 %08x\n", crc);
 }
