@@ -140,3 +140,38 @@ def jobs(trace, thread):
             out.append((release, start, e.t, cpu))
             release = None
     return out
+
+
+# Why a thread left the CPU (trace.c state_name) -> the state it is in after.
+OUT_STATE = {"ready": "preempted", "pending": "blocked", "sleeping": "sleeping",
+             "dead": "dead", "suspended": "suspended"}
+
+
+def thread_states(trace):
+    """thread -> [(state, t0, t1)] for every thread in the trace, measured.
+
+    States: running ("in" to "out"); after "out", what the record says the
+    thread left for: preempted (still runnable), blocked (pending on a
+    kernel object), sleeping, dead; after a "ready" (woken, or created),
+    ready: runnable and waiting for the CPU. Zero-length intervals are
+    dropped; intervals still open at the end of the trace are closed there.
+    """
+    state, since, out = {}, {}, {}
+
+    def enter(th, new, t):
+        if th in state and t > since[th]:
+            out.setdefault(th, []).append((state[th], since[th], t))
+        state[th], since[th] = new, t
+
+    for e in trace.events:
+        if e.event == "in":
+            enter(e.thread, "running", e.t)
+        elif e.event == "out":
+            enter(e.thread, OUT_STATE.get(e.arg, e.arg), e.t)
+        elif e.event == "ready" and state.get(e.thread) != "running":
+            enter(e.thread, "ready", e.t)
+    end = trace.events[-1].t if trace.events else 0.0
+    for th, st in state.items():
+        if st != "dead" and end > since[th]:
+            out.setdefault(th, []).append((st, since[th], end))
+    return out

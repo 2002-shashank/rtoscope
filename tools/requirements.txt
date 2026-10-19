@@ -1,3 +1,5 @@
 matplotlib>=3.8
 numpy>=1.26
 pytest>=8
+# Perfetto trace processor for tests/test_perfetto.py (downloads its binary on first use).
+perfetto>=0.58
