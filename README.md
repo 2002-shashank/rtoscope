@@ -31,7 +31,7 @@ H (prio 5) requests a mutex held by L (prio 9) while M (prio 7) burns CPU withou
 | Priority inheritance **on** | **40.0 ms** | **40.0 ms** (L's remaining critical section: bounded) |
 
 With inheritance on, the trace shows the kernel's own `prio_set` events boosting L from 9 to 5 and restoring it
-on unlock. "Off" uses the same `k_mutex`, with `CONFIG_PRIORITY_CEILING` set at the idle priority, which compiles
+on unlock. The same runs are viewable in Perfetto ([screenshots below](#view-traces-in-perfetto)). "Off" uses the same `k_mutex`, with `CONFIG_PRIORITY_CEILING` set at the idle priority, which compiles
 inheritance out of the kernel.
 
 ### 2. Response-time analysis vs measurement
@@ -192,6 +192,20 @@ Each trace is a process with these tracks:
   Click an alarm to see who was running and who held the mutex.
 - **An app track per thread:** jobs, waiting for lock, holds mutex.
 - **A priority counter per thread:** inheritance shows as a step 9 → 5 → 9.
+
+![Perfetto, priority inheritance off](docs/perfetto_pi_off.png)
+
+*Perfetto, priority inheritance **off** (`docs/perfetto/step7_nopi_mon.json`).*
+- *H's `blocked` slice runs **~240 ms** while M holds CPU0 for 200 ms; L holds the mutex but is preempted.*
+- *The two markers on H's track partway through the wait are the monitor's `blocked too long` and
+  `deadline miss` alarms.*
+
+![Perfetto, priority inheritance on](docs/perfetto_pi_on.png)
+
+*Perfetto, priority inheritance **on** (`docs/perfetto/step7_pi_mon.json`).*
+- *H is blocked only **~40 ms**: L keeps the CPU (its `L prio` counter dips from 9 to 5 for exactly that span),
+  releases the mutex, and H runs.*
+- *M, ready since its release, runs only afterwards.*
 
 ## How it works
 
