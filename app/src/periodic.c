@@ -22,6 +22,10 @@
 #include "burn.h"
 #include "monitor.h"
 #include "trace.h"
+#include "tracer.h"
+#if defined(CONFIG_RTOSCOPE_PROBE)
+#include "probe.h"
+#endif
 #if defined(CONFIG_RTOSCOPE_WDT)
 #include "watchdog.h"
 #endif
@@ -119,6 +123,9 @@ static void task_entry(void *p1, void *p2, void *p3)
 		 * however long the work (and any preemption) took.
 		 */
 		k_sleep(K_TIMEOUT_ABS_MS(next));
+#if defined(CONFIG_RTOSCOPE_PROBE)
+		probe_wake(idx, job);
+#endif
 
 		trace_app("start");
 		burn_cpu_ms(cfg->work_ms);
@@ -131,6 +138,9 @@ static void task_entry(void *p1, void *p2, void *p3)
 			wdt_fault();
 		}
 		trace_app("done");
+#if defined(CONFIG_RTOSCOPE_PROBE)
+		probe_done(idx, job);
+#endif
 
 		if (IS_ENABLED(CONFIG_RTOSCOPE_MONITOR)) {
 			mon_deadline_done(&deadlines[idx]);
@@ -168,6 +178,7 @@ int main(void)
 		hyper_ms = hyper_ms / gcd(hyper_ms, tasks[i].period_ms) * tasks[i].period_ms;
 	}
 
+	printk("# tracer: %s\n", tracer_name);
 	/* The analysis script reads the task set from here, not from a copy. */
 	printk("rtoscope periodic: %d hyperperiods of %u ms\n",
 	       CONFIG_RTOSCOPE_PERIODIC_HYPERPERIODS, hyper_ms);
@@ -205,7 +216,10 @@ int main(void)
 		 */
 		release_ms = k_uptime_get() + 10;
 		end_ms = release_ms + (int64_t)CONFIG_RTOSCOPE_PERIODIC_HYPERPERIODS * hyper_ms;
-		trace_start();
+#if defined(CONFIG_RTOSCOPE_PROBE)
+		probe_reset();
+#endif
+		tracer_start();
 
 		/* Reusing a k_thread is fine once k_thread_join() has seen it exit. */
 		for (int i = 0; i < NUM_TASKS; i++) {
@@ -220,15 +234,28 @@ int main(void)
 			k_thread_join(&threads[i], K_FOREVER);
 		}
 
-		trace_stop();
+		tracer_stop();
 		printk("# run %d/%d\n", run, CONFIG_RTOSCOPE_PERIODIC_RUNS);
-		trace_dump();
+		tracer_dump();
+#if defined(CONFIG_RTOSCOPE_PROBE)
+		{
+			const char *names[NUM_TASKS];
+
+			for (int i = 0; i < NUM_TASKS; i++) {
+				names[i] = tasks[i].name;
+			}
+			probe_dump(names, NUM_TASKS);
+		}
+#endif
 		if (IS_ENABLED(CONFIG_RTOSCOPE_MONITOR)) {
 			printk("# monitor: deadline misses so far H %u, M %u, L %u\n",
 			       deadlines[0].misses, deadlines[1].misses, deadlines[2].misses);
 		}
 	}
 
+	if (IS_ENABLED(CONFIG_RTOSCOPE_PROBE)) {
+		tracer_bench();
+	}
 	printk("# rtoscope runs done\n");
 	return 0;
 }

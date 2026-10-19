@@ -10,14 +10,12 @@
  * Thread names, formatting and UART output all happen in trace_dump().
  */
 
-#include <stdarg.h>
-
 #include <zephyr/kernel.h>
 #include <zephyr/kernel_structs.h>
-#include <zephyr/sys/crc.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
 
+#include "dump.h"
 #include "trace.h"
 
 enum ev_type {
@@ -172,26 +170,6 @@ static const char *state_name(uint8_t s)
 	return "ready";  /* still runnable: it was preempted */
 }
 
-/*
- * Print one dump line and fold it into the running CRC. The UART -> USB ->
- * host path can lose bytes (seen once in 690 KB on the CYD's CH340); a lost
- * digit would still parse, so the record count alone can't catch it.
- */
-static uint32_t dump_line(uint32_t crc, const char *fmt, ...)
-{
-	char line[96];
-	va_list ap;
-	int len;
-
-	va_start(ap, fmt);
-	len = vsnprintk(line, sizeof(line), fmt, ap);
-	va_end(ap);
-	len = MIN(len, (int)sizeof(line) - 1);
-
-	printk("%s", line);
-	return crc32_ieee_update(crc, (const uint8_t *)line, len);
-}
-
 void trace_dump(void)
 {
 	uint32_t n = MIN(head, TRACE_LEN);
@@ -220,6 +198,5 @@ void trace_dump(void)
 		}
 	}
 
-	/* CRC-32 (IEEE, same as Python's zlib.crc32) of every line above. */
-	printk("# crc32 %08x\n", crc);
+	dump_crc(crc);
 }

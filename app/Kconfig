@@ -31,6 +31,15 @@ config RTOSCOPE_PERIODIC_RUNS
 	  this many times in one boot, dumping the trace after each, then
 	  print "# rtoscope runs done".
 
+config RTOSCOPE_PROBE
+	bool "Periodic demo: tracer-independent job timing probe + tracer bench"
+	depends on RTOSCOPE_DEMO_PERIODIC
+	help
+	  Two CCOUNT reads per job (src/probe.c), dumped after each run, and a
+	  benchmark of the tracer's switched_in hook at the end. Used to compare
+	  tracers: build with prj.conf (trace.c), -DEXTRA_CONF_FILE=ctf.conf
+	  (Zephyr CTF) or -DEXTRA_CONF_FILE=notrace.conf (none).
+
 config RTOSCOPE_MONITOR
 	bool "On-device deadline and blocking-time monitor (src/monitor.c)"
 	help

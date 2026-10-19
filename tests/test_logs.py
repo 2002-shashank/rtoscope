@@ -12,9 +12,10 @@ import response_times
 import tracelog
 from conftest import LOGS
 
-# Every capture made with the scheduler trace (step 3 logs predate it).
-TRACED = sorted(p for p in LOGS.glob("step*_*.log") if not p.name.startswith("step3_")
-                and not p.name.startswith("step2_"))
+# Every capture that contains a trace.c dump (step 2/3 logs predate the
+# tracer; step 8's none/CTF builds use no tracer or Zephyr's).
+TRACED = sorted(p for p in LOGS.glob("step*_*.log")
+                if "# rtoscope trace, cycle clock" in p.read_text(errors="replace"))
 INVERSION = sorted(LOGS.glob("step4_*.log"))
 
 

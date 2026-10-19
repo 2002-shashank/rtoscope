@@ -1,0 +1,375 @@
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3ffb0000,len:6896
+load:0x40080000,len:32880
+load:0x50000000,len:40
+entry 0x400837a0
+I (soc_init): ESP Simple boot
+I (soc_init): compile time Oct 18 2026 22:29:10
+W (soc_init): Unicore bootloader
+I (soc_init): chip revision: v3.1
+I (flash_init): SPI Speed      : 40MHz
+I (flash_init): SPI Mode       : DIO
+I (flash_init): SPI Flash Size : 4MB
+I (boot): DRAM	: lma=00001020h vma=3ffb0000h size=01af0h (  6896)
+I (boot): IRAM	: lma=00002b18h vma=40080000h size=08070h ( 32880)
+I (boot): RTC_DATA	: lma=0000ab90h vma=50000000h size=00028h (    40)
+I (boot): IROM	: lma=00010000h vma=400d0000h size=03a00h ( 14848)
+I (boot): DROM	: lma=00020000h vma=3f400000h size=10000h ( 65536)
+I (boot): IROM	: lma=00030020h vma=400d0020h size=9233ch (598844)
+I (boot): DRAM	: lma=000c2364h vma=3ffc010ch size=03efch ( 16124)
+I (boot): IRAM	: lma=000c6268h vma=40080000h size=12bcch ( 76748)
+I (boot): libc heap size 146 kB.
+I (spi_flash): detected chip: generic
+I (spi_flash): flash io: dio
+*** Booting Zephyr OS build v4.4.2 ***
+# tracer: user
+rtoscope periodic: 1 hyperperiods of 3000 ms
+# task,name,prio,work_ms,period_ms
+# task,H,5,15,100
+# task,M,7,40,300
+# task,L,9,180,1000
+# run 1/1
+# rtoscope trace, cycle clock 240000000 Hz, 288 events, 0 dropped, trace call 143 cycles
+cycles,thread,event,prio,arg
+0,H,ready,5,
+755,M,ready,7,
+2470,L,ready,9,
+4564,main,pend,0,
+4882,main,out,0,pending
+5739,H,in,5,
+11946,H,out,5,sleeping
+12594,M,in,7,
+13681,M,out,7,sleeping
+14355,L,in,9,
+15234,L,out,9,sleeping
+15623,idle,in,15,
+2146825,H,ready,5,
+2147478,M,ready,7,
+2148240,L,ready,9,
+2149482,idle,out,15,ready
+2149719,H,in,5,
+2151128,H,app,5,start
+5752444,H,app,5,done
+5754599,H,out,5,sleeping
+5755530,M,in,7,
+5755992,M,app,7,start
+15358943,M,app,7,done
+15360232,M,out,7,sleeping
+15361163,L,in,9,
+15361625,L,app,9,start
+26146794,H,ready,5,
+26147920,L,out,9,ready
+26148157,H,in,5,
+26148619,H,app,5,start
+29748944,H,app,5,done
+29750231,H,out,5,sleeping
+29751162,L,in,9,
+50146857,H,ready,5,
+50147983,L,out,9,ready
+50148220,H,in,5,
+50148682,H,app,5,start
+53749007,H,app,5,done
+53750296,H,out,5,sleeping
+53751227,L,in,9,
+65779494,L,app,9,done
+65780460,L,out,9,sleeping
+65780849,idle,in,15,
+74146788,M,ready,7,
+74147439,H,ready,5,
+74148718,idle,out,15,ready
+74148955,H,in,5,
+74149417,H,app,5,start
+77749742,H,app,5,done
+77751029,H,out,5,sleeping
+77751960,M,in,7,
+77752422,M,app,7,start
+87355345,M,app,7,done
+87356309,M,out,7,sleeping
+87356698,idle,in,15,
+98146788,H,ready,5,
+98147657,idle,out,15,ready
+98147894,H,in,5,
+98148356,H,app,5,start
+101748681,H,app,5,done
+101749775,H,out,5,sleeping
+101750164,idle,in,15,
+122146788,H,ready,5,
+122147657,idle,out,15,ready
+122147894,H,in,5,
+122148356,H,app,5,start
+125748681,H,app,5,done
+125749645,H,out,5,sleeping
+125750034,idle,in,15,
+146146788,M,ready,7,
+146147439,H,ready,5,
+146148718,idle,out,15,ready
+146148955,H,in,5,
+146149417,H,app,5,start
+149749742,H,app,5,done
+149751029,H,out,5,sleeping
+149751960,M,in,7,
+149752422,M,app,7,start
+159355345,M,app,7,done
+159356309,M,out,7,sleeping
+159356698,idle,in,15,
+170146788,H,ready,5,
+170147657,idle,out,15,ready
+170147894,H,in,5,
+170148356,H,app,5,start
+173748681,H,app,5,done
+173749775,H,out,5,sleeping
+173750164,idle,in,15,
+194146788,H,ready,5,
+194147657,idle,out,15,ready
+194147894,H,in,5,
+194148356,H,app,5,start
+197748681,H,app,5,done
+197749645,H,out,5,sleeping
+197750034,idle,in,15,
+218146788,M,ready,7,
+218147439,H,ready,5,
+218148718,idle,out,15,ready
+218148955,H,in,5,
+218149417,H,app,5,start
+221749742,H,app,5,done
+221751031,H,out,5,sleeping
+221751962,M,in,7,
+221752424,M,app,7,start
+231355347,M,app,7,done
+231356313,M,out,7,sleeping
+231356702,idle,in,15,
+242146788,L,ready,9,
+242147439,H,ready,5,
+242148718,idle,out,15,ready
+242148955,H,in,5,
+242149417,H,app,5,start
+245749742,H,app,5,done
+245751029,H,out,5,sleeping
+245751960,L,in,9,
+245752422,L,app,9,start
+266146773,H,ready,5,
+266147899,L,out,9,ready
+266148136,H,in,5,
+266148598,H,app,5,start
+269748923,H,app,5,done
+269750212,H,out,5,sleeping
+269751143,L,in,9,
+290146794,M,ready,7,
+290147488,H,ready,5,
+290148711,L,out,9,ready
+290148948,H,in,5,
+290149410,H,app,5,start
+293749735,H,app,5,done
+293750944,H,out,5,sleeping
+293751875,M,in,7,
+293752337,M,app,7,start
+303355205,M,app,7,done
+303356494,M,out,7,sleeping
+303357425,L,in,9,
+305776468,L,app,9,done
+305777434,L,out,9,sleeping
+305777823,idle,in,15,
+314146788,H,ready,5,
+314147657,idle,out,15,ready
+314147894,H,in,5,
+314148356,H,app,5,start
+317748681,H,app,5,done
+317749775,H,out,5,sleeping
+317750164,idle,in,15,
+338146788,H,ready,5,
+338147657,idle,out,15,ready
+338147894,H,in,5,
+338148356,H,app,5,start
+341748681,H,app,5,done
+341749645,H,out,5,sleeping
+341750034,idle,in,15,
+362146788,M,ready,7,
+362147439,H,ready,5,
+362148718,idle,out,15,ready
+362148955,H,in,5,
+362149417,H,app,5,start
+365749742,H,app,5,done
+365751029,H,out,5,sleeping
+365751960,M,in,7,
+365752422,M,app,7,start
+375355345,M,app,7,done
+375356309,M,out,7,sleeping
+375356698,idle,in,15,
+386146788,H,ready,5,
+386147657,idle,out,15,ready
+386147894,H,in,5,
+386148356,H,app,5,start
+389748681,H,app,5,done
+389749775,H,out,5,sleeping
+389750164,idle,in,15,
+410146788,H,ready,5,
+410147657,idle,out,15,ready
+410147894,H,in,5,
+410148356,H,app,5,start
+413748681,H,app,5,done
+413749645,H,out,5,sleeping
+413750034,idle,in,15,
+434146788,M,ready,7,
+434147439,H,ready,5,
+434148718,idle,out,15,ready
+434148955,H,in,5,
+434149417,H,app,5,start
+437749742,H,app,5,done
+437751029,H,out,5,sleeping
+437751960,M,in,7,
+437752422,M,app,7,start
+447355345,M,app,7,done
+447356311,M,out,7,sleeping
+447356700,idle,in,15,
+458146788,H,ready,5,
+458147657,idle,out,15,ready
+458147894,H,in,5,
+458148356,H,app,5,start
+461748681,H,app,5,done
+461749645,H,out,5,sleeping
+461750034,idle,in,15,
+482146788,L,ready,9,
+482147439,H,ready,5,
+482148718,idle,out,15,ready
+482148955,H,in,5,
+482149417,H,app,5,start
+485749742,H,app,5,done
+485751031,H,out,5,sleeping
+485751962,L,in,9,
+485752424,L,app,9,start
+506146794,M,ready,7,
+506147488,H,ready,5,
+506148711,L,out,9,ready
+506148948,H,in,5,
+506149410,H,app,5,start
+509749735,H,app,5,done
+509750944,H,out,5,sleeping
+509751875,M,in,7,
+509752337,M,app,7,start
+519355205,M,app,7,done
+519356494,M,out,7,sleeping
+519357425,L,in,9,
+530146824,H,ready,5,
+530147950,L,out,9,ready
+530148187,H,in,5,
+530148649,H,app,5,start
+533748974,H,app,5,done
+533750261,H,out,5,sleeping
+533751192,L,in,9,
+545776471,L,app,9,done
+545777389,L,out,9,dead
+545777778,idle,in,15,
+554146788,H,ready,5,
+554147657,idle,out,15,ready
+554147894,H,in,5,
+554148356,H,app,5,start
+557748681,H,app,5,done
+557749621,H,out,5,sleeping
+557750010,idle,in,15,
+578146788,M,ready,7,
+578147415,H,ready,5,
+578148638,idle,out,15,ready
+578148875,H,in,5,
+578149337,H,app,5,start
+581749662,H,app,5,done
+581750871,H,out,5,sleeping
+581751802,M,in,7,
+581752264,M,app,7,start
+591355187,M,app,7,done
+591356127,M,out,7,sleeping
+591356516,idle,in,15,
+602146788,H,ready,5,
+602147657,idle,out,15,ready
+602147894,H,in,5,
+602148356,H,app,5,start
+605748681,H,app,5,done
+605749775,H,out,5,sleeping
+605750164,idle,in,15,
+626146788,H,ready,5,
+626147657,idle,out,15,ready
+626147894,H,in,5,
+626148356,H,app,5,start
+629748681,H,app,5,done
+629749621,H,out,5,sleeping
+629750010,idle,in,15,
+650146788,M,ready,7,
+650147415,H,ready,5,
+650148638,idle,out,15,ready
+650148875,H,in,5,
+650149337,H,app,5,start
+653749662,H,app,5,done
+653750871,H,out,5,sleeping
+653751802,M,in,7,
+653752264,M,app,7,start
+663355187,M,app,7,done
+663356105,M,out,7,dead
+663356494,idle,in,15,
+674146774,H,ready,5,
+674147618,idle,out,15,ready
+674147855,H,in,5,
+674148317,H,app,5,start
+677748642,H,app,5,done
+677749682,H,out,5,sleeping
+677750071,idle,in,15,
+698146774,H,ready,5,
+698147618,idle,out,15,ready
+698147855,H,in,5,
+698148317,H,app,5,start
+701748642,H,app,5,done
+701749066,main,ready,0,
+701750679,H,out,5,dead
+701751556,main,in,0,
+# crc32 e7175878
+# rtoscope probe, cycle clock 240000000 Hz, 43 jobs
+task,job,wake,done
+H,1,0,3602431
+H,2,23998438,27598931
+H,3,47998501,51598994
+H,4,71999236,75599729
+H,5,95998175,99598668
+H,6,119998175,123598668
+H,7,143999236,147599729
+H,8,167998175,171598668
+H,9,191998175,195598668
+H,10,215999236,219599729
+H,11,239999236,243599729
+H,12,263998417,267598910
+H,13,287999229,291599722
+H,14,311998175,315598668
+H,15,335998175,339598668
+H,16,359999236,363599729
+H,17,383998175,387598668
+H,18,407998175,411598668
+H,19,431999236,435599729
+H,20,455998175,459598668
+H,21,479999236,483599729
+H,22,503999229,507599722
+H,23,527998468,531598961
+H,24,551998175,555598668
+H,25,575999156,579599649
+H,26,599998175,603598668
+H,27,623998175,627598668
+H,28,647999156,651599649
+H,29,671998136,675598629
+H,30,695998136,699598629
+M,1,3605811,13208930
+M,2,75602241,85205332
+M,3,147602241,157205332
+M,4,219602243,229205334
+M,5,291602156,301205192
+M,6,363602241,373205332
+M,7,435602241,445205332
+M,8,507602156,517205192
+M,9,579602083,589205174
+M,10,651602083,661205174
+L,1,13211444,63629481
+L,2,243602241,303626455
+L,3,483602243,543626458
+# crc32 a4906199
+# bench: tracer user, switched_in hook cycles: min 133, median 133, max 133 (64 calls, IRQs locked, cycle-read cost 23 subtracted)
+# rtoscope runs done
