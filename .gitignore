@@ -13,7 +13,3 @@ __pycache__/
 
 # macOS
 .DS_Store
-
-# Local notes and editor settings, kept out of the repo
-CLAUDE.md
-.claude/
