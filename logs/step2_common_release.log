@@ -1,0 +1,131 @@
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3ffb0000,len:6892
+ho 0 tail 12 room 4
+load:0x40080000,len:32352
+load:0x50000000,len:40
+entry 0x40083590
+I (soc_init): ESP Simple boot
+I (soc_init): compile time Oct 18 2026 20:09:45
+W (soc_init): Unicore bootloader
+I (soc_init): chip revision: v3.1
+I (flash_init): SPI Speed      : 40MHz
+I (flash_init): SPI Mode       : DIO
+I (flash_init): SPI Flash Size : 4MB
+I (boot): DRAM	: lma=00001020h vma=3ffb0000h size=01aech (  6892)
+I (boot): IRAM	: lma=00002b14h vma=40080000h size=07e60h ( 32352)
+I (boot): RTC_DATA	: lma=0000a97ch vma=50000000h size=00028h (    40)
+I (boot): IROM	: lma=00010000h vma=400d0000h size=03250h ( 12880)
+I (boot): DROM	: lma=00020000h vma=3f400000h size=10000h ( 65536)
+I (boot): IROM	: lma=00030020h vma=400d0020h size=9233ch (598844)
+I (boot): DRAM	: lma=000c2364h vma=3ffc010ch size=03efch ( 16124)
+I (boot): IRAM	: lma=000c6268h vma=40080000h size=12bcch ( 76748)
+I (boot): libc heap size 180 kB.
+I (spi_flash): detected chip: generic
+I (spi_flash): flash io: dio
+*** Booting Zephyr OS build v4.4.2 ***
+rtoscope step 2: H=5 M=7 L=9 (main=0)
+[   134 ms] H start
+[   149 ms] H done
+[   149 ms] M start
+[   189 ms] M done
+[   189 ms] L start
+[   234 ms] H start
+[   249 ms] H done
+[   334 ms] H start
+[   349 ms] H done
+[   399 ms] L done
+[   434 ms] H start
+[   449 ms] H done
+[   449 ms] M start
+[   489 ms] M done
+[   534 ms] H start
+[   549 ms] H done
+[   634 ms] H start
+[   649 ms] H done
+[   734 ms] H start
+[   749 ms] H done
+[   749 ms] M start
+[   789 ms] M done
+[   834 ms] H start
+[   849 ms] H done
+[   934 ms] H start
+[   949 ms] H done
+[  1034 ms] H start
+[  1049 ms] H done
+[  1049 ms] M start
+[  1089 ms] M done
+[  1134 ms] H start
+[  1149 ms] H done
+[  1149 ms] L start
+[  1234 ms] H start
+[  1249 ms] H done
+[  1334 ms] H start
+[  1349 ms] H done
+[  1349 ms] M start
+[  1389 ms] M done
+[  1399 ms] L done
+[  1434 ms] H start
+[  1449 ms] H done
+[  1534 ms] H start
+[  1549 ms] H done
+[  1634 ms] H start
+[  1649 ms] H done
+[  1649 ms] M start
+[  1689 ms] M done
+[  1734 ms] H start
+[  1749 ms] H done
+[  1834 ms] H start
+[  1849 ms] H done
+[  1934 ms] H start
+[  1949 ms] H done
+[  1949 ms] M start
+[  1989 ms] M done
+[  2034 ms] H start
+[  2049 ms] H done
+[  2134 ms] H start
+[  2149 ms] H done
+[  2149 ms] L start
+[  2234 ms] H start
+[  2249 ms] H done
+[  2249 ms] M start
+[  2289 ms] M done
+[  2334 ms] H start
+[  2349 ms] H done
+[  2399 ms] L done
+[  2434 ms] H start
+[  2449 ms] H done
+[  2534 ms] H start
+[  2549 ms] H done
+[  2549 ms] M start
+[  2589 ms] M done
+[  2634 ms] H start
+[  2649 ms] H done
+[  2734 ms] H start
+[  2749 ms] H done
+[  2834 ms] H start
+[  2849 ms] H done
+[  2849 ms] M start
+[  2889 ms] M done
+[  2934 ms] H start
+[  2949 ms] H done
+[  3034 ms] H start
+[  3049 ms] H done
+[  3134 ms] H start
+[  3149 ms] H done
+[  3149 ms] M start
+[  3189 ms] M done
+[  3189 ms] L start
+[  3234 ms] H start
+[  3249 ms] H done
+[  3334 ms] H start
+[  3349 ms] H done
+[  3399 ms] L done
+[  3434 ms] H start
+[  3449 ms] H done
+[  3449 ms] M start
+[  3489 ms] M done

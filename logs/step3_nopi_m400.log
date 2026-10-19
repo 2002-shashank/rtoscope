@@ -1,0 +1,43 @@
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3ffb0000,len:6912
+load:0x40080000,len:32784
+load:0x50000000,len:40
+entry 0x40083744
+I (soc_init): ESP Simple boot
+I (soc_init): compile time Oct 18 2026 20:32:07
+W (soc_init): Unicore bootloader
+I (soc_init): chip revision: v3.1
+I (flash_init): SPI Speed      : 40MHz
+I (flash_init): SPI Mode       : DIO
+I (flash_init): SPI Flash Size : 4MB
+I (boot): DRAM	: lma=00001020h vma=3ffb0000h size=01b00h (  6912)
+I (boot): IRAM	: lma=00002b28h vma=40080000h size=08010h ( 32784)
+I (boot): RTC_DATA	: lma=0000ab40h vma=50000000h size=00028h (    40)
+I (boot): IROM	: lma=00010000h vma=400d0000h size=034f0h ( 13552)
+I (boot): DROM	: lma=00020000h vma=3f400000h size=10000h ( 65536)
+I (boot): IROM	: lma=00030020h vma=400d0020h size=9233ch (598844)
+I (boot): DRAM	: lma=000c2364h vma=3ffc010ch size=03efch ( 16124)
+I (boot): IRAM	: lma=000c6268h vma=40080000h size=12bcch ( 76748)
+I (boot): libc heap size 179 kB.
+I (spi_flash): detected chip: generic
+I (spi_flash): flash io: dio
+*** Booting Zephyr OS build v4.4.2 ***
+rtoscope step 3: k_mutex, priority inheritance OFF (CONFIG_PRIORITY_CEILING), M work 400 ms, PRIORITY_CEILING=15
+# cycle clock 240000000 Hz, 10 events
+t_us,thread,prio,event
+0,L,9,lock request
+0,L,9,locked
+9988,H,5,lock request
+19989,M,7,start
+420092,M,7,done
+450131,L,9,unlock
+450139,H,5,locked
+460140,H,5,unlock
+460141,H,5,done
+460163,L,9,done
+# H blocked on the mutex for 440151 us

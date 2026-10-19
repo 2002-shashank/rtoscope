@@ -1,0 +1,41 @@
+mainmenu "rtoscope"
+
+choice RTOSCOPE_DEMO
+	prompt "Demo to run"
+	default RTOSCOPE_DEMO_INVERSION
+
+config RTOSCOPE_DEMO_PERIODIC
+	bool "Step 2: three periodic threads"
+
+config RTOSCOPE_DEMO_INVERSION
+	bool "Step 3: priority inversion"
+
+endchoice
+
+if RTOSCOPE_DEMO_INVERSION
+
+choice RTOSCOPE_LOCK
+	prompt "Lock protecting the shared resource"
+	default RTOSCOPE_LOCK_MUTEX_PI
+
+config RTOSCOPE_LOCK_MUTEX_PI
+	bool "k_mutex with priority inheritance"
+
+config RTOSCOPE_LOCK_MUTEX_NO_PI
+	bool "k_mutex with priority inheritance compiled out"
+
+endchoice
+
+config RTOSCOPE_M_WORK_MS
+	int "CPU time the medium thread burns (ms)"
+	default 200
+
+endif
+
+# A ceiling at or below the idle priority (K_LOWEST_THREAD_PRIO, which is
+# NUM_PREEMPT_PRIORITIES) compiles k_mutex priority inheritance out.
+# Defaults given here take precedence over the kernel's own default.
+config PRIORITY_CEILING
+	default NUM_PREEMPT_PRIORITIES if RTOSCOPE_LOCK_MUTEX_NO_PI
+
+source "Kconfig.zephyr"

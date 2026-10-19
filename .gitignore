@@ -1,0 +1,18 @@
+# Build outputs and venvs. Anything generated on the iCloud-synced Desktop
+# must end in .nosync, so this covers build-*.nosync/ and
+# tools/.venv.nosync/.
+*.nosync/
+build/
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Local notes and editor settings, kept out of the repo
+CLAUDE.md
+.claude/
