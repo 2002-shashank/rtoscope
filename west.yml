@@ -1,0 +1,22 @@
+# West manifest for CI and fresh clones: Zephyr v4.4.2 plus the one module the
+# ESP32 build needs (verified locally with ZEPHYR_MODULES=hal_espressif only).
+#
+# Local development doesn't use this: it builds against the existing
+# ~/zephyrproject workspace via ZEPHYR_BASE.
+#
+#   west init -l rtoscope && west update --narrow -o=--depth=1
+manifest:
+  self:
+    path: rtoscope
+
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: v4.4.2
+      import:
+        name-allowlist:
+          - hal_espressif

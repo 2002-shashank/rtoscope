@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    name: Log and analysis tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tools/requirements.txt
+      - run: pytest -v
+
+  firmware:
+    name: Firmware build (esp32_devkitc/esp32/procpu)
+    runs-on: ubuntu-24.04
+    steps:
+      # The app lives in a subdirectory so the west workspace can sit beside
+      # it: west init -l makes the parent directory the workspace.
+      - uses: actions/checkout@v4
+        with:
+          path: rtoscope
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: West workspace (Zephyr v4.4.2 + hal_espressif)
+        run: |
+          pip install west==1.5.0
+          west init -l rtoscope
+          west update --narrow -o=--depth=1
+          pip install -r zephyr/scripts/requirements-base.txt
+          # The ESP32 image step needs esptool on PATH; no Zephyr
+          # requirements file lists it. Same version as local.
+          pip install esptool==5.6.0
+          echo "SDK_VERSION=$(cat zephyr/SDK_VERSION)" >> "$GITHUB_ENV"
+
+      - name: Cache Zephyr SDK
+        id: sdk-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/zephyr-sdk-${{ env.SDK_VERSION }}
+          key: zephyr-sdk-${{ env.SDK_VERSION }}-xtensa-espressif_esp32
+
+      - name: Zephyr SDK (Xtensa ESP32 toolchain only)
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        run: west sdk install -t xtensa-espressif_esp32_zephyr-elf
+
+      - name: Espressif binary blobs
+        run: west blobs fetch hal_espressif
+
+      - name: Build all variants (warnings are errors)
+        run: |
+          set -e
+          export ZEPHYR_SDK_INSTALL_DIR="$HOME/zephyr-sdk-$SDK_VERSION"
+          build() {  # dir, extra -D options...
+            d=$1; shift
+            west build -d "build-$d" -b esp32_devkitc/esp32/procpu rtoscope/app -- \
+              -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y "$@"
+          }
+          build pi
+          build nopi -DCONFIG_RTOSCOPE_LOCK_MUTEX_NO_PI=y
+          build periodic -DCONFIG_RTOSCOPE_DEMO_PERIODIC=y
+          build repeat -DCONFIG_RTOSCOPE_DEMO_PERIODIC=y \
+            -DCONFIG_RTOSCOPE_PERIODIC_RUNS=100 -DCONFIG_RTOSCOPE_PERIODIC_HYPERPERIODS=1
+          grep -E "^CONFIG_(PRIORITY_CEILING|RTOSCOPE_)" build-*/zephyr/.config
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: build-*/zephyr/zephyr.bin

@@ -55,21 +55,20 @@ def fmt_row(label, xs):
             f"{s['p99']:8.2f} {s['max']:8.2f}")
 
 
-def main():
-    path = (Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "logs" / "step6_repeat.log").resolve()
-    try:
-        # strict=False: one run corrupted in transit is excluded and
-        # reported, rather than discarding the other 99.
-        all_traces = tracelog.parse_all(path, strict=False)
-    except tracelog.TraceError as err:
-        sys.exit(str(err))
+def analyze(path):
+    """Collect per-job and per-switch measurements over every intact run.
+
+    strict=False: one run corrupted in transit is excluded and reported,
+    rather than discarding the rest. Raises TraceError if no run is intact
+    or a run's job count disagrees with the simulation.
+    """
+    all_traces = tracelog.parse_all(path, strict=False)
     tasks, (n_hyper, hyper_us) = rt.read_tasks(all_traces[0])
     numbered = [(run_number(tr, k), tr) for k, tr in enumerate(all_traces, 1)]
     bad = [(k, tr.error) for k, tr in numbered if tr.error]
     good = [(k, tr) for k, tr in numbered if not tr.error]
     if not good:
-        sys.exit("no intact runs:\n" + "\n".join(err for _, err in bad))
-    traces = [tr for _, tr in good]
+        raise tracelog.TraceError("no intact runs:\n" + "\n".join(err for _, err in bad))
     sim = rt.simulate(tasks, n_hyper * hyper_us)
 
     excess = {t.name: [] for t in tasks}        # per job, all runs
@@ -83,7 +82,8 @@ def main():
         for t in tasks:
             jobs = tracelog.jobs(trace, t.name)
             if len(jobs) != len(sim[t.name]):
-                sys.exit(f"run {run}: {t.name} has {len(jobs)} jobs, simulation {len(sim[t.name])}")
+                raise tracelog.TraceError(f"run {run}: {t.name} has {len(jobs)} jobs, "
+                                          f"simulation {len(sim[t.name])}")
             ex = [(done - rel) - s for (rel, _, done, _), s in zip(jobs, sim[t.name])]
             excess[t.name] += ex
             excess_by_run[t.name].append(max(ex))
@@ -93,44 +93,58 @@ def main():
         for kind, gap in rt.switch_gaps(trace):
             gaps[kind].append(gap)
 
+    # Overhead-aware RTA with the worst J, S and Cmax seen in ANY run: the
+    # observed WCET over many runs, not one.
+    s_worst = max(max(xs) for xs in gaps.values())
+    bound = rt.rta(tasks, c_of=lambda t: c_max[t.name] + 2 * s_worst,
+                   j_of=lambda t: max(jitter[t.name]))
+    return dict(tasks=tasks, n_hyper=n_hyper, hyper_us=hyper_us, good=good, bad=bad,
+                excess=excess, excess_by_run=excess_by_run, jitter=jitter, gaps=gaps,
+                resp_max=resp_max, s_worst=s_worst, bound=bound,
+                within={t.name: resp_max[t.name] <= bound[t.name] for t in tasks})
+
+
+def main():
+    path = (Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "logs" / "step6_repeat.log").resolve()
+    try:
+        a = analyze(path)
+    except tracelog.TraceError as err:
+        sys.exit(str(err))
+    tasks, good = a["tasks"], a["good"]
+    traces = [tr for _, tr in good]
+
     calls = {tr.call_cycles for tr in traces}
-    print(f"{path.relative_to(ROOT)}: {len(traces)} intact runs x {n_hyper} hyperperiod(s) of "
-          f"{hyper_us / 1000:.0f} ms, trace call {'/'.join(map(str, sorted(calls)))} cycles")
-    for k, err in bad:
+    print(f"{path.relative_to(ROOT)}: {len(traces)} intact runs x {a['n_hyper']} hyperperiod(s) "
+          f"of {a['hyper_us'] / 1000:.0f} ms, trace call {'/'.join(map(str, sorted(calls)))} cycles")
+    for k, err in a["bad"]:
         print(f"  excluded run {k}: {err.split(': ', 2)[-1]}")
     print()
     hdr = f"{'µs':28} {'n':>5} {'min':>8} {'mean':>8} {'p50':>8} {'p99':>8} {'max':>8}"
     print(hdr)
     print("-" * len(hdr))
     for t in tasks:
-        print(fmt_row(f"{t.name} response - simulated", excess[t.name]))
+        print(fmt_row(f"{t.name} response - simulated", a["excess"][t.name]))
     for t in tasks:
-        print(fmt_row(f"{t.name} release jitter", jitter[t.name]))
-    for kind, xs in gaps.items():
+        print(fmt_row(f"{t.name} release jitter", a["jitter"][t.name]))
+    for kind, xs in a["gaps"].items():
         print(fmt_row(f"switch out->in, {kind}", xs))
 
     if len(traces) > 1 and good[0][0] == 1:
         print("\nrun 1 (cold caches) vs runs 2..N, worst excess per run (µs):")
         for t in tasks:
-            rest = excess_by_run[t.name][1:]
-            print(f"  {t.name}: run 1 {excess_by_run[t.name][0]:7.2f}   runs 2..N max "
-                  f"{max(rest):7.2f}   mean {np.mean(rest):7.2f}")
+            by_run = a["excess_by_run"][t.name]
+            print(f"  {t.name}: run 1 {by_run[0]:7.2f}   runs 2..N max "
+                  f"{max(by_run[1:]):7.2f}   mean {np.mean(by_run[1:]):7.2f}")
 
-    # Overhead-aware RTA with the worst J, S and Cmax seen in ANY run: the
-    # observed WCET over many runs, not one.
-    s_worst = max(max(xs) for xs in gaps.values())
-    bound = rt.rta(tasks, c_of=lambda t: c_max[t.name] + 2 * s_worst,
-                   j_of=lambda t: max(jitter[t.name]))
-    print(f"\noverhead-aware RTA (all-run worst J, S = {s_worst:.2f} µs, Cmax):")
-    ok = True
+    print(f"\noverhead-aware RTA (all-run worst J, S = {a['s_worst']:.2f} µs, Cmax):")
     for t in tasks:
-        within = resp_max[t.name] <= bound[t.name]
-        ok &= within
-        print(f"  {t.name}: worst response {resp_max[t.name] / 1000:9.3f} ms  bound "
-              f"{bound[t.name] / 1000:9.3f} ms  {'ok' if within else 'EXCEEDED'}")
+        print(f"  {t.name}: worst response {a['resp_max'][t.name] / 1000:9.3f} ms  bound "
+              f"{a['bound'][t.name] / 1000:9.3f} ms  "
+              f"{'ok' if a['within'][t.name] else 'EXCEEDED'}")
 
-    plot(tasks, excess, jitter, gaps, len(traces), ROOT / "docs" / "step6_histograms.png")
-    sys.exit(0 if ok else 1)
+    plot(tasks, a["excess"], a["jitter"], a["gaps"], len(traces),
+         ROOT / "docs" / "step6_histograms.png")
+    sys.exit(0 if all(a["within"].values()) else 1)
 
 
 def panel(ax, xs, title):

@@ -136,11 +136,14 @@ def simulate(tasks, horizon_us):
     return resp
 
 
-def main():
-    path = (Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "logs" / "step5_periodic.log").resolve()
-    trace = tracelog.parse(path)
-    tasks, (n_hyper, hyper_us) = read_tasks(trace)
+def analyze(trace):
+    """Compare RTA, RTA+ovh, simulation and measurement for one periodic trace.
 
+    Returns (tasks, info, rows): info holds the run shape and measured
+    overheads; rows has one dict per task. Raises TraceError if the trace
+    and the simulation disagree on the number of jobs.
+    """
+    tasks, (n_hyper, hyper_us) = read_tasks(trace)
     measured = {t.name: tracelog.jobs(trace, t.name) for t in tasks}
     sim = simulate(tasks, n_hyper * hyper_us)
     bound = rta(tasks)
@@ -150,33 +153,52 @@ def main():
     bound_ovh = rta(tasks, c_of=lambda t: c_max[t.name] + 2 * switch,
                     j_of=lambda t: jitter[t.name])
 
-    print(f"{path.relative_to(ROOT)}: {n_hyper} hyperperiods of {hyper_us / 1000:.0f} ms, "
-          f"{len(trace.events)} records, trace call {trace.call_cycles} cycles")
-    print(f"utilization {sum(t.c_us / t.t_us for t in tasks):.1%}, worst switch gap S = "
-          f"{switch:.2f} µs, release jitter J = "
-          + ", ".join(f"{t.name} {jitter[t.name]:.2f}" for t in tasks) + " µs\n")
+    rows = []
+    for t in tasks:
+        m_resp = [done - rel for rel, _, done, _ in measured[t.name]]
+        s_resp = sim[t.name]
+        if len(m_resp) != len(s_resp):
+            raise tracelog.TraceError(f"{t.name}: {len(m_resp)} measured jobs but "
+                                      f"{len(s_resp)} simulated")
+        rows.append(dict(
+            task=t, jobs=len(m_resp), rta=bound[t.name], rta_ovh=bound_ovh[t.name],
+            sim_min=min(s_resp), sim_max=max(s_resp), meas_min=min(m_resp), meas_max=max(m_resp),
+            max_err=max(abs(m - s) for m, s in zip(m_resp, s_resp)),
+            c_overhead=c_max[t.name] - t.c_us, margin=bound[t.name] - max(m_resp),
+            within=max(m_resp) <= bound_ovh[t.name]))
+    info = dict(n_hyper=n_hyper, hyper_us=hyper_us, switch=switch, jitter=jitter,
+                utilization=sum(t.c_us / t.t_us for t in tasks))
+    return tasks, info, rows
+
+
+def main():
+    path = (Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "logs" / "step5_periodic.log").resolve()
+    try:
+        trace = tracelog.parse(path)
+        tasks, info, rows = analyze(trace)
+    except tracelog.TraceError as err:
+        sys.exit(str(err))
+
+    print(f"{path.relative_to(ROOT)}: {info['n_hyper']} hyperperiods of "
+          f"{info['hyper_us'] / 1000:.0f} ms, {len(trace.events)} records, "
+          f"trace call {trace.call_cycles} cycles")
+    print(f"utilization {info['utilization']:.1%}, worst switch gap S = "
+          f"{info['switch']:.2f} µs, release jitter J = "
+          + ", ".join(f"{t.name} {info['jitter'][t.name]:.2f}" for t in tasks) + " µs\n")
     hdr = (f"{'task':4} {'C ms':>5} {'T ms':>5} {'jobs':>4} | {'RTA':>8} {'RTA+ovh':>9} | "
            f"{'sim min..max':>15} | {'meas min..max':>19} | {'max|meas-sim|':>13} "
            f"{'C overhead':>10} | {'RTA - worst':>11}")
     print(hdr)
     print("-" * len(hdr))
-    ok = True
-    for t in tasks:
-        m_resp = [done - rel for rel, _, done, _ in measured[t.name]]
-        s_resp = sim[t.name]
-        if len(m_resp) != len(s_resp):
-            sys.exit(f"{t.name}: {len(m_resp)} measured jobs but {len(s_resp)} simulated")
-        err = max(abs(m - s) for m, s in zip(m_resp, s_resp))
-        overhead = c_max[t.name] - t.c_us
-        margin = bound[t.name] - max(m_resp)
-        within = max(m_resp) <= bound_ovh[t.name]
-        ok &= within
-        print(f"{t.name:4} {t.c_us / 1000:5.0f} {t.t_us / 1000:5.0f} {len(m_resp):4} | "
-              f"{bound[t.name] / 1000:8.3f} {bound_ovh[t.name] / 1000:9.3f} | "
-              f"{min(s_resp) / 1000:7.3f}..{max(s_resp) / 1000:7.3f} | "
-              f"{min(m_resp) / 1000:9.3f}..{max(m_resp) / 1000:9.3f} | "
-              f"{err:10.1f} µs {overhead:7.1f} µs | {margin:8.1f} µs"
-              f"   meas <= RTA+ovh: {'yes' if within else 'NO'}")
+    for r in rows:
+        t = r["task"]
+        print(f"{t.name:4} {t.c_us / 1000:5.0f} {t.t_us / 1000:5.0f} {r['jobs']:4} | "
+              f"{r['rta'] / 1000:8.3f} {r['rta_ovh'] / 1000:9.3f} | "
+              f"{r['sim_min'] / 1000:7.3f}..{r['sim_max'] / 1000:7.3f} | "
+              f"{r['meas_min'] / 1000:9.3f}..{r['meas_max'] / 1000:9.3f} | "
+              f"{r['max_err']:10.1f} µs {r['c_overhead']:7.1f} µs | {r['margin']:8.1f} µs"
+              f"   meas <= RTA+ovh: {'yes' if r['within'] else 'NO'}")
+    ok = all(r["within"] for r in rows)
     print("\nunits: ms unless marked. C overhead = worst measured CPU per job - nominal C.")
     print("every measured response <= RTA+ovh:", "yes" if ok else "NO")
     sys.exit(0 if ok else 1)
