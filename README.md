@@ -2,6 +2,15 @@
 
 **Zephyr RTOS scheduling, instrumented and measured on a real ESP32.**
 
+**Highlights**
+- **Unbounded priority inversion, measured:** H blocked 240 ms without priority inheritance vs 40 ms with it.
+- **Cycle-accurate tracer:** 0.55 µs per event, 5× cheaper than Zephyr's built-in CTF tracing, on the same workload.
+- **Real-time analysis vs hardware:** response-time analysis with measured overheads bounds all 4300 jobs over
+  100 runs, within 15 µs.
+- **On-device safety:** deadline and inversion monitor (misses detected ≤ 8.1 µs after the deadline), plus a two-level watchdog proven
+  with injected faults.
+- **Tested end to end:** 89 pytest checks on real board logs, CI firmware builds, and Perfetto trace export.
+
 rtoscope runs preemptive-priority workloads on a classic ESP32 (Xtensa LX6, 240 MHz) under Zephyr v4.4.2 and
 measures what the scheduler actually does. A custom tracer hooks every context switch, wake-up and priority
 change with CPU-cycle timestamps; the trace is dumped over UART with a CRC after each run and analyzed on the
