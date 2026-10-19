@@ -9,8 +9,8 @@ jobs:
     name: Log and analysis tests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install -r tools/requirements.txt
@@ -22,11 +22,11 @@ jobs:
     steps:
       # The app lives in a subdirectory so the west workspace can sit beside
       # it: west init -l makes the parent directory the workspace.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: rtoscope
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -43,7 +43,7 @@ jobs:
 
       - name: Cache Zephyr SDK
         id: sdk-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/zephyr-sdk-${{ env.SDK_VERSION }}
           key: zephyr-sdk-${{ env.SDK_VERSION }}-xtensa-espressif_esp32
@@ -84,7 +84,7 @@ jobs:
           build cmp-ctf-noisr $CMP -DEXTRA_CONF_FILE=ctf.conf -DCONFIG_TRACING_ISR=n
           grep -E "^CONFIG_(PRIORITY_CEILING|RTOSCOPE_)" build-*/zephyr/.config
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: firmware
           path: build-*/zephyr/zephyr.bin
